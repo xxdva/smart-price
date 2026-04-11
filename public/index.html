@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartPrice — Сравнение цен</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <span class="logo-icon">💡</span>
+        <span>SmartPrice</span>
+      </a>
+      <nav>
+        <a href="/">Главная</a>
+        <a href="/admin">Админка</a>
+        <div id="navAuth"></div>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">Казахстан · Sulpak · Technodom · Mechta</div>
+      <h1>Найди лучшую цену<br>на любой товар</h1>
+      <p>Сравниваем цены в популярных магазинах — быстро и удобно</p>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Например: iPhone 15, MacBook..." autocomplete="off">
+        <button id="searchBtn">Найти</button>
+      </div>
+      <div id="suggestions" class="suggestions"></div>
+    </div>
+  </section>
+
+  <main>
+    <section id="results" class="results hidden">
+      <div class="results-header">
+        <h2 id="productName"></h2>
+      </div>
+      <div id="priceCards" class="price-cards"></div>
+    </section>
+
+    <section class="how-it-works">
+      <h2 class="section-title" style="text-align:center">Как это работает</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Введите товар</strong>
+            <span>Напишите название в поиске</span>
+          </div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>Сравниваем цены</strong>
+            <span>Смотрим во всех магазинах</span>
+          </div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>Лучшая цена</strong>
+            <span>Выделяем самое выгодное</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="products-section">
+      <h2 class="section-title">Все товары</h2>
+      <div id="productsGrid" class="products-grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">💡 SmartPrice</div>
+        <p>Сравнение цен в Казахстане</p>
+      </div>
+      <div class="footer-contacts">
+        <h3>Контакты команды</h3>
+        <div class="contacts-list">
+          <div class="contact-item">
+            <span class="contact-icon">👥</span>
+            <div>
+              <strong>Разработчики</strong>
+              <span>Нурлай Ильяс · Медет Мустафин · Дамир Жанетов</span>
+            </div>
+          </div>
+          <div class="contact-item">
+            <span class="contact-icon">✉️</span>
+            <div>
+              <strong>Email</strong>
+              <a href="mailto:air95003@gmail.com">air95003@gmail.com</a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <span class="contact-icon">📞</span>
+            <div>
+              <strong>Телефон</strong>
+              <a href="tel:+77023615920">+7 702 361-59-20</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>SmartPrice &copy; 2024 — Все права защищены</p>
+    </div>
+  </footer>
+
+  <script>
+    // Шапка: кнопки входа/кабинета
+    fetch('/api/me').then(r => r.json()).then(({ user }) => {
+      const nav = document.getElementById('navAuth');
+      if (user) {
+        nav.innerHTML = `<a href="/cabinet" class="nav-user">
+          <div class="nav-avatar">${user.name.charAt(0).toUpperCase()}</div>
+          ${user.name.split(' ')[0]}
+        </a>`;
+      } else {
+        nav.innerHTML = `
+          <a href="/login" style="color:rgba(255,255,255,0.82);text-decoration:none;margin-left:20px;font-size:0.95rem;font-weight:500;">Войти</a>
+          <a href="/register" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;text-decoration:none;margin-left:10px;padding:6px 14px;border-radius:8px;font-size:0.9rem;font-weight:600;">Регистрация</a>`;
+      }
+    });
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>

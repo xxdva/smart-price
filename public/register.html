@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация — SmartPrice</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo" style="text-decoration:none;color:white">
+        <span class="logo-icon">💡</span>
+        <span>SmartPrice</span>
+      </a>
+      <nav>
+        <a href="/">Главная</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-icon">🚀</div>
+      <h1>Регистрация</h1>
+      <p class="auth-sub">Создайте аккаунт и сохраняйте историю поиска</p>
+
+      <form id="registerForm">
+        <div class="form-group">
+          <label>Ваше имя</label>
+          <input type="text" id="name" placeholder="Иван Иванов" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="example@gmail.com" required>
+        </div>
+        <div class="form-group">
+          <label>Пароль</label>
+          <input type="password" id="password" placeholder="Минимум 6 символов" required>
+        </div>
+        <div id="errorMsg" class="auth-error"></div>
+        <button type="submit" class="btn-auth">Создать аккаунт</button>
+      </form>
+
+      <div class="auth-footer">
+        Уже есть аккаунт? <a href="/login">Войти</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.textContent = '';
+
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        errorMsg.textContent = data.error;
+      } else {
+        window.location.href = '/cabinet';
+      }
+    });
+  </script>
+</body>
+</html>

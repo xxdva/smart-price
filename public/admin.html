@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админка — SmartPrice</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo">💡 SmartPrice</div>
+      <nav>
+        <a href="/">Главная</a>
+        <a href="/admin">Админка</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="admin-container">
+    <h1>Панель управления</h1>
+
+    <div class="admin-grid">
+
+      <!-- Добавить товар -->
+      <div class="admin-card">
+        <h2>📦 Добавить товар</h2>
+        <form id="productForm">
+          <div class="form-group">
+            <label>Название товара</label>
+            <input type="text" id="productName" placeholder="Например: iPhone 16 Pro" required>
+          </div>
+          <button type="submit" class="btn-submit">Добавить товар</button>
+          <div id="productMsg" class="success-msg"></div>
+        </form>
+      </div>
+
+      <!-- Добавить магазин -->
+      <div class="admin-card">
+        <h2>🏪 Добавить магазин</h2>
+        <form id="storeForm">
+          <div class="form-group">
+            <label>Название магазина</label>
+            <input type="text" id="storeName" placeholder="Например: Kaspi Магазин" required>
+          </div>
+          <button type="submit" class="btn-submit">Добавить магазин</button>
+          <div id="storeMsg" class="success-msg"></div>
+        </form>
+      </div>
+
+      <!-- Добавить цену (на всю ширину) -->
+      <div class="admin-card" style="grid-column: 1 / -1">
+        <h2>💸 Добавить / обновить цену</h2>
+        <form id="priceForm">
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Товар</label>
+              <select id="priceProduct" required>
+                <option value="">— выберите товар —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Магазин</label>
+              <select id="priceStore" required>
+                <option value="">— выберите магазин —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Цена (₸)</label>
+              <input type="number" id="priceValue" placeholder="320000" min="1" required>
+            </div>
+          </div>
+          <button type="submit" class="btn-submit">Сохранить цену</button>
+          <div id="priceMsg" class="success-msg"></div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Загрузить товары и магазины в селекты
+    async function loadSelects() {
+      const [products, stores] = await Promise.all([
+        fetch('/api/products').then(r => r.json()),
+        fetch('/api/stores').then(r => r.json())
+      ]);
+
+      const productSelect = document.getElementById('priceProduct');
+      const storeSelect = document.getElementById('priceStore');
+
+      products.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        productSelect.appendChild(opt);
+      });
+
+      stores.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        storeSelect.appendChild(opt);
+      });
+    }
+
+    loadSelects();
+
+    // Форма: добавить товар
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('productName').value.trim();
+      const msg = document.getElementById('productMsg');
+      try {
+        const res = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        msg.className = 'success-msg';
+        msg.textContent = `Товар "${data.name}" добавлен (ID: ${data.id})`;
+        document.getElementById('productName').value = '';
+        // Добавить в селект цен
+        const opt = document.createElement('option');
+        opt.value = data.id;
+        opt.textContent = data.name;
+        document.getElementById('priceProduct').appendChild(opt);
+      } catch (err) {
+        msg.className = 'error-msg';
+        msg.textContent = err.message;
+      }
+    });
+
+    // Форма: добавить магазин
+    document.getElementById('storeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('storeName').value.trim();
+      const msg = document.getElementById('storeMsg');
+      try {
+        const res = await fetch('/api/stores', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        msg.className = 'success-msg';
+        msg.textContent = `Магазин "${data.name}" добавлен (ID: ${data.id})`;
+        document.getElementById('storeName').value = '';
+        const opt = document.createElement('option');
+        opt.value = data.id;
+        opt.textContent = data.name;
+        document.getElementById('priceStore').appendChild(opt);
+      } catch (err) {
+        msg.className = 'error-msg';
+        msg.textContent = err.message;
+      }
+    });
+
+    // Форма: добавить цену
+    document.getElementById('priceForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const product_id = document.getElementById('priceProduct').value;
+      const store_id = document.getElementById('priceStore').value;
+      const price = parseInt(document.getElementById('priceValue').value);
+      const msg = document.getElementById('priceMsg');
+      try {
+        const res = await fetch('/api/prices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product_id, store_id, price })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        msg.className = 'success-msg';
+        msg.textContent = data.updated ? 'Цена обновлена!' : 'Цена добавлена!';
+        document.getElementById('priceValue').value = '';
+      } catch (err) {
+        msg.className = 'error-msg';
+        msg.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>
