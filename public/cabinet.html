@@ -3,250 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Мой кабинет — SmartPrice</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Кабинет - SmartPrice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
 </head>
-<body>
+<body class="page page-dashboard">
+  <div class="page-glow" aria-hidden="true">
+    <span class="glow glow-a"></span>
+    <span class="glow glow-b"></span>
+    <span class="glow glow-c"></span>
+  </div>
 
-  <header>
-    <div class="header-inner">
-      <a href="/" class="logo">
-        <span class="logo-icon">💡</span>
-        <span>SmartPrice</span>
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a href="/" class="brand">
+        <span class="brand__mark">S</span>
+        <span>
+          <strong>SmartPrice</strong>
+          <small>Личный кабинет</small>
+        </span>
       </a>
-      <nav>
+
+      <nav class="site-nav">
         <a href="/">Главная</a>
+        <a href="/#catalog">Каталог</a>
         <a href="/admin">Админка</a>
-        <button id="logoutBtn" class="btn-logout">Выйти</button>
       </nav>
+
+      <button id="logoutBtn" class="btn btn-secondary" type="button">Выйти</button>
     </div>
   </header>
 
-  <div class="cabinet-page">
-
-    <div class="cabinet-header">
-      <div class="cabinet-avatar" id="avatarInitial">?</div>
-      <div>
-        <h1 id="userName">Загрузка...</h1>
-        <p id="userEmail" class="cabinet-email"></p>
-        <span class="cabinet-badge">Клиент SmartPrice</span>
-      </div>
-    </div>
-
-    <div class="cabinet-grid">
-
-      <!-- Мои данные -->
-      <div class="cabinet-card">
-        <h2>👤 Мои данные</h2>
-        <div class="info-list">
-          <div class="info-row">
-            <span class="info-label">Имя</span>
-            <span id="infoName" class="info-value">—</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Email</span>
-            <span id="infoEmail" class="info-value">—</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Дата регистрации</span>
-            <span id="infoDate" class="info-value">—</span>
+  <main class="container dashboard">
+    <section class="profile-hero reveal-up">
+      <div class="profile-card">
+        <div id="profileAvatar" class="profile-card__avatar">?</div>
+        <div>
+          <span class="eyebrow eyebrow-soft">Ваш профиль</span>
+          <h1 id="profileName">Загрузка...</h1>
+          <p id="profileEmail" class="muted-text"></p>
+          <div class="profile-meta">
+            <span id="profileDate" class="tag tag-soft">Дата регистрации: —</span>
+            <span class="tag tag-soft">SmartPrice Member</span>
           </div>
         </div>
       </div>
 
-      <!-- Статистика -->
-      <div class="cabinet-card">
-        <h2>📊 Статистика</h2>
-        <div class="stats-grid">
-          <div class="stat-box">
-            <div class="stat-num" id="statSearches">0</div>
-            <div class="stat-label">Поисков</div>
+      <div id="statsGrid" class="stats-grid stats-grid-dashboard"></div>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="panel panel-wide reveal-up delay-1">
+        <div class="panel__head">
+          <div>
+            <span class="eyebrow">Корзина</span>
+            <h2>Сохраненные товары</h2>
           </div>
-          <div class="stat-box">
-            <div class="stat-num" id="statCart">0</div>
-            <div class="stat-label">В корзине</div>
+          <button id="clearCartBtn" class="btn btn-ghost" type="button">Очистить корзину</button>
+        </div>
+        <div id="cartSummary" class="summary-banner hidden"></div>
+        <div id="cartList" class="stack-list"></div>
+      </article>
+
+      <article class="panel reveal-up delay-2">
+        <div class="panel__head">
+          <div>
+            <span class="eyebrow">История</span>
+            <h2>Последние поиски</h2>
           </div>
-          <div class="stat-box">
-            <div class="stat-num" id="statProducts">0</div>
-            <div class="stat-label">Товаров в базе</div>
+          <button id="clearHistoryBtn" class="btn btn-ghost" type="button">Очистить</button>
+        </div>
+        <div id="searchHistory" class="stack-list"></div>
+      </article>
+
+      <article class="panel reveal-up delay-3">
+        <div class="panel__head">
+          <div>
+            <span class="eyebrow">Быстрые действия</span>
+            <h2>Что можно сделать сейчас</h2>
           </div>
         </div>
-      </div>
+        <div class="quick-actions">
+          <a class="quick-link" href="/#catalog">Открыть каталог и выбрать новые товары</a>
+          <a class="quick-link" href="/admin">Добавить товары и магазины в админке</a>
+          <a class="quick-link" href="/">Вернуться на главный экран</a>
+        </div>
+      </article>
 
-      <!-- Корзина -->
-      <div class="cabinet-card cabinet-card-wide">
-        <h2>🛒 Моя корзина</h2>
-        <div id="cartList"><div class="loading">Загрузка...</div></div>
-      </div>
+      <article class="panel panel-wide reveal-up delay-4">
+        <div class="panel__head">
+          <div>
+            <span class="eyebrow">Рекомендации</span>
+            <h2>Лучшие предложения прямо сейчас</h2>
+          </div>
+        </div>
+        <div id="recommendationsGrid" class="mini-product-grid"></div>
+      </article>
+    </section>
+  </main>
 
-      <!-- История поиска -->
-      <div class="cabinet-card cabinet-card-wide">
-        <h2>🔍 История поиска</h2>
-        <div id="searchHistory"><div class="loading">Загрузка...</div></div>
-      </div>
+  <div id="checkoutModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+    <div class="modal__backdrop" data-close-checkout="true"></div>
+    <div class="modal__dialog modal__dialog-narrow">
+      <button id="closeCheckoutBtn" class="modal__close" type="button" aria-label="Закрыть">×</button>
+      <div class="checkout-modal">
+        <span class="eyebrow eyebrow-soft">Оплата</span>
+        <h2 id="checkoutTitle">Оформление заказа</h2>
+        <p class="muted-text">Заполните данные для подтверждения заказа. После успешной оплаты корзина будет очищена.</p>
 
+        <form id="checkoutForm" class="stack-form">
+          <label class="field">
+            <span class="field__label">Имя получателя</span>
+            <input id="checkoutName" name="checkoutName" type="text" placeholder="Например: Медет" required>
+          </label>
+          <label class="field">
+            <span class="field__label">Телефон</span>
+            <input id="checkoutPhone" name="checkoutPhone" type="tel" placeholder="+7 700 000 00 00" required>
+          </label>
+          <label class="field">
+            <span class="field__label">Номер карты</span>
+            <input id="checkoutCard" name="checkoutCard" type="text" inputmode="numeric" placeholder="1234 5678 9012 3456" required>
+          </label>
+          <label class="field">
+            <span class="field__label">Адрес доставки</span>
+            <input id="checkoutAddress" name="checkoutAddress" type="text" placeholder="Город, улица, дом" required>
+          </label>
+          <div id="checkoutSummary" class="summary-banner"></div>
+          <div id="checkoutError" class="form-message form-message-error"></div>
+          <button id="submitCheckoutBtn" class="btn btn-primary btn-block" type="submit">Оплатить сейчас</button>
+        </form>
+      </div>
     </div>
   </div>
 
-  <footer>
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <div class="footer-logo">💡 SmartPrice</div>
-        <p>Сравнение цен в Казахстане</p>
-      </div>
-      <div class="footer-contacts">
-        <h3>Контакты команды</h3>
-        <div class="contacts-list">
-          <div class="contact-item">
-            <span class="contact-icon">👥</span>
-            <div>
-              <strong>Разработчики</strong>
-              <span>Нурлай Ильяс · Медет Мустафин · Дамир Жанетов</span>
-            </div>
-          </div>
-          <div class="contact-item">
-            <span class="contact-icon">✉️</span>
-            <div>
-              <strong>Email</strong>
-              <a href="mailto:air95003@gmail.com">air95003@gmail.com</a>
-            </div>
-          </div>
-          <div class="contact-item">
-            <span class="contact-icon">📞</span>
-            <div>
-              <strong>Телефон</strong>
-              <a href="tel:+77023615920">+7 702 361-59-20</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>SmartPrice &copy; 2024 — Все права защищены</p>
-    </div>
-  </footer>
+  <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
-  <script>
-    async function loadCabinet() {
-      const [meRes, searchRes, cartRes, productsRes] = await Promise.all([
-        fetch('/api/me'),
-        fetch('/api/my-searches'),
-        fetch('/api/cart'),
-        fetch('/api/products')
-      ]);
-
-      const { user } = await meRes.json();
-      if (!user) { window.location.href = '/login'; return; }
-
-      const searches = await searchRes.json();
-      const cart     = await cartRes.json();
-      const products = await productsRes.json();
-
-      // Профиль
-      document.getElementById('userName').textContent    = user.name;
-      document.getElementById('userEmail').textContent   = user.email;
-      document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
-      document.getElementById('infoName').textContent    = user.name;
-      document.getElementById('infoEmail').textContent   = user.email;
-      document.getElementById('infoDate').textContent    = new Date(user.createdAt).toLocaleDateString('ru-RU', {
-        day: 'numeric', month: 'long', year: 'numeric'
-      });
-
-      // Статистика
-      document.getElementById('statSearches').textContent = searches.length;
-      document.getElementById('statCart').textContent     = cart.length;
-      document.getElementById('statProducts').textContent = products.length;
-
-      // Корзина
-      renderCart(cart);
-
-      // История поиска
-      const historyEl = document.getElementById('searchHistory');
-      if (searches.length === 0) {
-        historyEl.innerHTML = '<p class="empty-history">Вы ещё ничего не искали. <a href="/">Попробуйте поиск!</a></p>';
-      } else {
-        historyEl.innerHTML = searches.map(s => `
-          <div class="history-item">
-            <a href="/?q=${encodeURIComponent(s.query)}" class="history-query">🔍 ${escHtml(s.query)}</a>
-            <span class="history-date">${new Date(s.createdAt).toLocaleString('ru-RU', {
-              day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-            })}</span>
-          </div>
-        `).join('');
-      }
-    }
-
-    function renderCart(cart) {
-      const cartEl = document.getElementById('cartList');
-      document.getElementById('statCart').textContent = cart.length;
-
-      if (cart.length === 0) {
-        cartEl.innerHTML = '<p class="empty-history">Корзина пуста. <a href="/">Найти товары</a></p>';
-        return;
-      }
-
-      const total = cart.reduce((sum, item) => sum + item.price, 0);
-      const storeLink = (item) => item.store.url
-        ? `<a href="${escHtml(item.store.url)}" target="_blank">${escHtml(item.store.name)}</a>`
-        : escHtml(item.store.name);
-
-      cartEl.innerHTML = cart.map(item => `
-        <div class="cart-item" id="cart-item-${item.id}">
-          <div class="cart-icon">${item.product.icon}</div>
-          <div class="cart-info">
-            <div class="cart-product-name">${escHtml(item.product.name)}</div>
-            <div class="cart-store-name">${storeLink(item)}</div>
-          </div>
-          <div class="cart-price">${fmtPrice(item.price)} ₸</div>
-          <button class="btn-cart-remove" onclick="removeFromCart(${item.id})" title="Удалить">✕</button>
-        </div>
-      `).join('') + `
-        <div class="cart-total">
-          <span>Итого (${cart.length} товар${cart.length > 1 ? 'а' : ''})</span>
-          <strong>${fmtPrice(total)} ₸</strong>
-        </div>
-      `;
-    }
-
-    async function removeFromCart(id) {
-      const res = await fetch(`/api/cart/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        const el = document.getElementById(`cart-item-${id}`);
-        if (el) el.remove();
-        // Пересчитаем итого
-        const remaining = document.querySelectorAll('.cart-item');
-        if (remaining.length === 0) {
-          document.getElementById('cartList').innerHTML =
-            '<p class="empty-history">Корзина пуста. <a href="/">Найти товары</a></p>';
-          document.getElementById('statCart').textContent = '0';
-        } else {
-          // Обновим total
-          const prices = [...document.querySelectorAll('.cart-price')]
-            .map(el => parseInt(el.textContent.replace(/\s/g,'').replace('₸','')));
-          const total = prices.reduce((a, b) => a + b, 0);
-          const totalEl = document.querySelector('.cart-total strong');
-          if (totalEl) totalEl.textContent = fmtPrice(total) + ' ₸';
-          const countEl = document.querySelector('.cart-total span');
-          if (countEl) countEl.textContent = `Итого (${remaining.length} товар${remaining.length > 1 ? 'а' : ''})`;
-          document.getElementById('statCart').textContent = remaining.length;
-        }
-      }
-    }
-
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      await fetch('/api/logout', { method: 'POST' });
-      window.location.href = '/';
-    });
-
-    function fmtPrice(n) {
-      return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    }
-
-    function escHtml(str) {
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    loadCabinet();
-  </script>
+  <script src="/cabinet.js"></script>
 </body>
 </html>

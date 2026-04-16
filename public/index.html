@@ -3,135 +3,299 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SmartPrice — Сравнение цен</title>
-  <link rel="stylesheet" href="style.css">
+  <title>SmartPrice - современный каталог техники</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
 </head>
-<body>
+<body class="page page-home">
+  <div class="page-glow" aria-hidden="true">
+    <span class="glow glow-a"></span>
+    <span class="glow glow-b"></span>
+    <span class="glow glow-c"></span>
+  </div>
 
-  <header>
-    <div class="header-inner">
-      <a href="/" class="logo">
-        <span class="logo-icon">💡</span>
-        <span>SmartPrice</span>
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a href="/" class="brand">
+        <span class="brand__mark">S</span>
+        <span>
+          <strong>SmartPrice</strong>
+          <small>Каталог техники и выгодных цен</small>
+        </span>
       </a>
-      <nav>
-        <a href="/">Главная</a>
+
+      <nav class="site-nav">
+        <a href="/" class="is-active">Главная</a>
+        <a href="#catalog">Каталог</a>
+        <!-- <a href="/favorites.html" class="nav-link-accent">Избранное <span class="nav-count" data-favorites-count>0</span></a> -->
+        <a href="/cabinet">Кабинет</a>
         <a href="/admin">Админка</a>
-        <div id="navAuth"></div>
       </nav>
+
+      <div class="nav-auth-wrap">
+        <button id="themeToggle" class="theme-toggle" aria-label="Переключить тему" title="Тёмная / светлая тема">🌙</button>
+        <a href="/favorites.html" class="nav-icon-link" aria-label="Избранное">
+          <span class="nav-icon-link__heart">&#10084;</span>
+          <span class="nav-count" data-favorites-count>0</span>
+        </a>
+        <div id="navAuth" class="nav-auth"></div>
+      </div>
     </div>
   </header>
 
-  <section class="hero">
-    <div class="hero-content">
-      <div class="hero-badge">Казахстан · Sulpak · Technodom · Mechta</div>
-      <h1>Найди лучшую цену<br>на любой товар</h1>
-      <p>Сравниваем цены в популярных магазинах — быстро и удобно</p>
-      <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Например: iPhone 15, MacBook..." autocomplete="off">
-        <button id="searchBtn">Найти</button>
-      </div>
-      <div id="suggestions" class="suggestions"></div>
-    </div>
-  </section>
-
   <main>
-    <section id="results" class="results hidden">
-      <div class="results-header">
-        <h2 id="productName"></h2>
+    <section class="hero-section">
+      <div class="container hero-grid">
+        <div class="hero-copy hero-shell">
+          <span class="eyebrow reveal-up">Smart shopping, simplified</span>
+          <h1 class="reveal-up delay-1">Современный <span class="hero-grad">каталог&nbsp;техники</span> с чистым интерфейсом и быстрым выбором.</h1>
+          <p class="hero-copy__lead reveal-up delay-2">
+            Смотрите карточки товаров в спокойном минималистичном стиле, сравнивайте предложения магазинов и сохраняйте понравившиеся позиции локально в избранное.
+          </p>
+
+          <div class="hero-search reveal-up delay-3">
+            <label class="field field-search">
+              <span class="field__icon">&#8981;</span>
+              <input id="heroSearchInput" type="text" placeholder="Например: iPhone, PS5, MacBook Air">
+            </label>
+            <button id="heroSearchBtn" class="btn btn-primary" type="button">Найти</button>
+            <!-- <div id="heroSuggestions" class="suggestions"></div> -->
+          </div>
+
+          <div class="hero-actions reveal-up delay-4">
+            <a href="#catalog" class="btn btn-primary">Открыть каталог</a>
+            <a href="/favorites.html" class="btn btn-secondary">Избранное <span class="btn-count" data-favorites-count>0</span></a>
+            <button id="scrollToSelectionBtn" class="btn btn-ghost" type="button">Мой выбор</button>
+          </div>
+
+        </div>
+
+        <div class="hero-card reveal-up delay-2">
+          <div class="hero-card__head">
+            <span class="eyebrow eyebrow-soft">Обзор каталога</span>
+            <strong>Короткий путь к нужному товару</strong>
+          </div>
+          <div id="heroStats" class="stats-grid stats-grid-hero"></div>
+          <div class="hero-card__footer">
+            <p>Новые карточки акцентируют цену, описание и действия, а избранное всегда хранится в браузере без аккаунта и без backend-изменений.</p>
+          </div>
+        </div>
       </div>
-      <div id="priceCards" class="price-cards"></div>
     </section>
 
-    <section class="how-it-works">
-      <h2 class="section-title" style="text-align:center">Как это работает</h2>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-text">
-            <strong>Введите товар</strong>
-            <span>Напишите название в поиске</span>
+    <!-- ── Trust strip ───────────────────────── -->
+    <div class="trust-strip">
+      <div class="container">
+        <div class="trust-strip__inner">
+          <div class="trust-item">
+            <span class="trust-item__num" id="trustProductsCount">209+</span>
+            <span class="trust-item__label">товаров</span>
           </div>
-        </div>
-        <div class="step-arrow">→</div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-text">
-            <strong>Сравниваем цены</strong>
-            <span>Смотрим во всех магазинах</span>
+          <span class="trust-divider" aria-hidden="true"></span>
+          <div class="trust-item">
+            <span class="trust-item__num">10+</span>
+            <span class="trust-item__label">магазинов</span>
           </div>
-        </div>
-        <div class="step-arrow">→</div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-text">
-            <strong>Лучшая цена</strong>
-            <span>Выделяем самое выгодное</span>
+          <span class="trust-divider" aria-hidden="true"></span>
+          <div class="trust-item">
+            <span class="trust-item__num">0&nbsp;₸</span>
+            <span class="trust-item__label">комиссий</span>
+          </div>
+          <span class="trust-divider" aria-hidden="true"></span>
+          <div class="trust-item">
+            <span class="trust-item__num">∞</span>
+            <span class="trust-item__label">сравнений</span>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ── Category quick-nav ─────────────────── -->
+    <div class="cat-strip">
+      <div class="container cat-strip__inner">
+        <a href="#catalog" class="cat-pill">Все товары</a>
+        <a href="#catalog" class="cat-pill">📱 Смартфоны</a>
+        <a href="#catalog" class="cat-pill">💻 Ноутбуки</a>
+        <a href="#catalog" class="cat-pill">📟 Планшеты</a>
+        <a href="#catalog" class="cat-pill">📺 Телевизоры</a>
+        <a href="#catalog" class="cat-pill">🎧 Аудио</a>
+        <a href="#catalog" class="cat-pill">⌚ Носимые</a>
+        <a href="#catalog" class="cat-pill">🎮 Игры</a>
+        <a href="#catalog" class="cat-pill">📷 Камеры</a>
+        <a href="#catalog" class="cat-pill">🖥 Мониторы</a>
+      </div>
+    </div>
+
+    <section class="container featured-section">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Витрина</span>
+          <h2>Товары, на которые стоит посмотреть в первую очередь</h2>
+        </div>
+        <p>Акцент на лучшей цене, чистой подаче контента и быстром переходе к деталям.</p>
+      </div>
+      <div id="featuredGrid" class="featured-grid"></div>
     </section>
 
-    <section class="products-section">
-      <h2 class="section-title">Все товары</h2>
-      <div id="productsGrid" class="products-grid"></div>
+    <section id="catalog" class="catalog-section">
+      <div class="container catalog-shell">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Каталог</span>
+            <h2>Спокойный интерфейс для выбора, сравнения и сохранения товаров</h2>
+          </div>
+          <p id="catalogMeta">Загружаем каталог и готовим витрину товаров...</p>
+        </div>
+
+        <div class="catalog-layout">
+          <aside class="panel filters-panel">
+            <div class="panel__head">
+              <h3>Фильтры</h3>
+              <button id="resetFiltersBtn" class="btn btn-ghost" type="button">Сбросить</button>
+            </div>
+
+            <label class="field">
+              <span class="field__label">Поиск по каталогу</span>
+              <input id="catalogSearchInput" type="text" placeholder="Название товара">
+            </label>
+
+            <div class="field-group">
+              <span class="field__label">Категории</span>
+              <div id="categoryChips" class="chip-grid"></div>
+            </div>
+
+            <div class="field-group">
+              <span class="field__label">Магазины</span>
+              <div id="storeFilters" class="check-grid"></div>
+            </div>
+
+            <div class="field-group">
+              <span class="field__label">Диапазон цены, ₸</span>
+              <div class="field-row">
+                <label class="field">
+                  <input id="minPriceInput" type="number" min="0" placeholder="От">
+                </label>
+                <label class="field">
+                  <input id="maxPriceInput" type="number" min="0" placeholder="До">
+                </label>
+              </div>
+            </div>
+
+            <label class="field">
+              <span class="field__label">Сортировка</span>
+              <select id="sortSelect">
+                <option value="popular">По популярности</option>
+                <option value="price-asc">Сначала дешевле</option>
+                <option value="price-desc">Сначала дороже</option>
+                <option value="savings">По экономии</option>
+                <option value="name">По названию</option>
+              </select>
+            </label>
+          </aside>
+
+          <div class="catalog-main">
+            <div class="panel toolbar-panel">
+              <div id="activeFilters" class="active-filters"></div>
+              <div class="toolbar-panel__meta">
+                <span id="resultCount" class="results-label">0 товаров</span>
+                <button id="showSelectionBtn" class="btn btn-ghost" type="button">Мой выбор</button>
+              </div>
+            </div>
+
+            <div id="catalogInsights" class="catalog-insights"></div>
+            <div id="catalogGrid" class="product-grid"></div>
+            <div id="catalogFooter" class="catalog-footer hidden">
+              <button id="loadMoreBtn" class="btn btn-secondary" type="button">Показать ещё</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
-  <footer>
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <div class="footer-logo">💡 SmartPrice</div>
-        <p>Сравнение цен в Казахстане</p>
+  <section id="selectionDock" class="selection-dock hidden" aria-live="polite">
+    <div class="selection-dock__content">
+      <div>
+        <span class="eyebrow eyebrow-soft">Мой выбор</span>
+        <h3 id="selectionTitle">Выбрано 0 товаров</h3>
       </div>
-      <div class="footer-contacts">
-        <h3>Контакты команды</h3>
-        <div class="contacts-list">
-          <div class="contact-item">
-            <span class="contact-icon">👥</span>
-            <div>
-              <strong>Разработчики</strong>
-              <span>Нурлай Ильяс · Медет Мустафин · Дамир Жанетов</span>
-            </div>
-          </div>
-          <div class="contact-item">
-            <span class="contact-icon">✉️</span>
-            <div>
-              <strong>Email</strong>
-              <a href="mailto:air95003@gmail.com">air95003@gmail.com</a>
-            </div>
-          </div>
-          <div class="contact-item">
-            <span class="contact-icon">📞</span>
-            <div>
-              <strong>Телефон</strong>
-              <a href="tel:+77023615920">+7 702 361-59-20</a>
-            </div>
-          </div>
-        </div>
+      <div id="selectionItems" class="selection-items"></div>
+    </div>
+    <div class="selection-dock__actions">
+      <button id="clearSelectionBtn" class="btn btn-ghost" type="button">Очистить</button>
+    </div>
+  </section>
+
+  <div id="productModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalProductTitle">
+    <div class="modal__backdrop" data-close-modal="true"></div>
+    <div class="modal__dialog">
+      <button class="modal__close" id="closeModalBtn" type="button" aria-label="Закрыть">&#10005;</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ── Compare bar ──────────────────────────── -->
+  <div id="compareBar" class="compare-bar">
+    <span class="compare-bar__label">Сравнение</span>
+    <div id="compareBarItems" class="compare-bar__items">
+      <div class="compare-bar__slot" data-slot="0"></div>
+      <div class="compare-bar__slot" data-slot="1"></div>
+      <div class="compare-bar__slot" data-slot="2"></div>
+    </div>
+    <div class="compare-bar__actions">
+      <button id="openCompareBtn" class="btn btn-primary" style="padding:8px 16px;font-size:0.85rem">Сравнить</button>
+      <button id="clearCompareBtn" class="btn btn-secondary" style="padding:8px 14px;font-size:0.85rem">✕</button>
+    </div>
+  </div>
+
+  <!-- ── Compare modal ────────────────────────── -->
+  <div id="compareModal" class="compare-modal" role="dialog" aria-modal="true">
+    <div class="compare-modal__box">
+      <div class="compare-modal__head">
+        <h2 style="margin:0;font-size:1.3rem">Сравнение товаров</h2>
+        <button id="closeCompareBtn" class="btn btn-ghost" style="padding:8px 14px">✕ Закрыть</button>
+      </div>
+      <div id="compareTableWrap"></div>
+    </div>
+  </div>
+
+  <!-- ── Rate store popup ──────────────────────── -->
+  <div id="rateStorePopup" class="rate-store-popup" role="dialog">
+    <div class="rate-store-popup__box">
+      <div id="rateStoreName" class="rate-store-popup__name"></div>
+      <div id="rateStoreStars" class="rate-store-popup__stars"></div>
+      <div class="rate-store-popup__actions">
+        <button id="rateStoreConfirmBtn" class="btn btn-primary" style="padding:8px 20px">Оценить</button>
+        <button id="rateStoreCancelBtn" class="btn btn-ghost" style="padding:8px 14px">Отмена</button>
       </div>
     </div>
-    <div class="footer-bottom">
-      <p>SmartPrice &copy; 2024 — Все права защищены</p>
+  </div>
+
+  <!-- ── Footer ──────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <a href="/" class="brand">
+        <span class="brand__mark">S</span>
+        <span>
+          <strong>SmartPrice</strong>
+          <small>Умное сравнение цен</small>
+        </span>
+      </a>
+      <nav class="footer-nav">
+        <a href="/">Главная</a>
+        <a href="#catalog">Каталог</a>
+        <a href="/favorites.html">Избранное</a>
+        <a href="/cabinet">Кабинет</a>
+      </nav>
+      <p class="footer-copy">© 2025 SmartPrice</p>
     </div>
   </footer>
 
-  <script>
-    // Шапка: кнопки входа/кабинета
-    fetch('/api/me').then(r => r.json()).then(({ user }) => {
-      const nav = document.getElementById('navAuth');
-      if (user) {
-        nav.innerHTML = `<a href="/cabinet" class="nav-user">
-          <div class="nav-avatar">${user.name.charAt(0).toUpperCase()}</div>
-          ${user.name.split(' ')[0]}
-        </a>`;
-      } else {
-        nav.innerHTML = `
-          <a href="/login" style="color:rgba(255,255,255,0.82);text-decoration:none;margin-left:20px;font-size:0.95rem;font-weight:500;">Войти</a>
-          <a href="/register" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;text-decoration:none;margin-left:10px;padding:6px 14px;border-radius:8px;font-size:0.9rem;font-weight:600;">Регистрация</a>`;
-      }
-    });
-  </script>
-  <script src="script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/script.js"></script>
 </body>
 </html>

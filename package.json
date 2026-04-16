@@ -4,8 +4,12 @@
   "description": "",
   "main": "server.js",
   "scripts": {
+    "dev": "node --env-file=.env server.js",
+    "seed:catalog": "node --env-file=.env seed-data.js",
+    "seed:stores": "node --env-file=.env expand-catalog.js",
+    "repair:images": "node --env-file=.env repair-product-images.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node --env-file=.env server.js"
   },
   "keywords": [],
   "author": "",

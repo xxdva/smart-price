@@ -6,6 +6,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: "postgresql://postgres@localhost:5432/smartprice",
+    url: process.env.DATABASE_URL ?? "postgresql://postgres@localhost:5432/smartprice",
   },
 });

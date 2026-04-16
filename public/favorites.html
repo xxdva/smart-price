@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartPrice - избранные товары</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="page page-favorites">
+  <div class="page-glow" aria-hidden="true">
+    <span class="glow glow-a"></span>
+    <span class="glow glow-b"></span>
+    <span class="glow glow-c"></span>
+  </div>
+
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a href="/" class="brand">
+        <span class="brand__mark">S</span>
+        <span>
+          <strong>SmartPrice</strong>
+          <small>Локально сохранённые товары</small>
+        </span>
+      </a>
+
+      <nav class="site-nav">
+        <a href="/">Главная</a>
+        <a href="/#catalog">Каталог</a>
+        <a href="/favorites.html" class="is-active nav-link-accent">Избранное <span class="nav-count" data-favorites-count>0</span></a>
+        <a href="/cabinet">Кабинет</a>
+        <a href="/admin">Админка</a>
+      </nav>
+
+      <div class="nav-auth-wrap">
+        <a href="/favorites.html" class="nav-icon-link is-active" aria-label="Избранное">
+          <span class="nav-icon-link__heart">&#10084;</span>
+          <span class="nav-count" data-favorites-count>0</span>
+        </a>
+        <div id="navAuth" class="nav-auth"></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="favorites-hero">
+      <div class="container">
+        <div class="panel favorites-intro">
+          <span class="eyebrow">LocalStorage</span>
+          <h1>Избранные товары</h1>
+          <p>Здесь собраны все карточки, которые вы отметили сердцем. Список хранится локально в браузере и доступен без backend-изменений.</p>
+
+          <div class="favorites-summary">
+            <article class="summary-tile">
+              <span>Сохранено</span>
+              <strong id="favoritesCountValue">0</strong>
+            </article>
+            <article class="summary-tile">
+              <span>Статус</span>
+              <strong id="favoritesStatus">Нет избранных товаров</strong>
+            </article>
+            <a href="/" class="btn btn-primary">Вернуться в каталог</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="catalog-section favorites-section">
+      <div class="container">
+        <div id="favoritesGrid" class="product-grid favorites-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="productModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalProductTitle">
+    <div class="modal__backdrop" data-close-modal="true"></div>
+    <div class="modal__dialog">
+      <button class="modal__close" id="closeModalBtn" type="button" aria-label="Закрыть">&#10005;</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="/script.js"></script>
+</body>
+</html>

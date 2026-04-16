@@ -4,11 +4,20 @@ const { PrismaPg } = require('@prisma/adapter-pg');
 const adapter = new PrismaPg({ connectionString: 'postgresql://postgres@localhost:5432/smartprice' });
 const prisma = new PrismaClient({ adapter });
 
-// ===== 3 НОВЫХ МАГАЗИНА =====
+// ===== НОВЫЕ МАГАЗИНЫ =====
 const newStores = [
   { name: 'Alser',          url: 'https://alser.kz' },
   { name: 'Kaspi Магазин',  url: 'https://shop.kaspi.kz' },
   { name: 'DNS',            url: 'https://www.dns-shop.kz' },
+  { name: 'Евrika',         url: 'https://evrika.com' },
+  { name: 'Forpost',        url: 'https://forpost.kz' },
+  { name: 'iSpace',         url: 'https://ispace.kz' },
+  { name: 'Марвин',         url: 'https://marwin.kz' },
+  { name: 'BTS Digital',    url: 'https://bts.kz' },
+  { name: 'Shop.kz',        url: 'https://shop.kz' },
+  { name: 'Eldorado',       url: 'https://eldorado.kz' },
+  { name: 'Samsung Store',  url: 'https://samsung.com/kz' },
+  { name: 'Xiaomi Store',   url: 'https://mi.kz' },
 ];
 
 // ===== 200 ПОПУЛЯРНЫХ ТОВАРОВ =====
@@ -249,6 +258,17 @@ const storeVariations = [
   +0.05,  // +5%
   +0.01,  // +1%
   -0.04,  // -4%
+  +0.07,  // +7%
+  -0.06,  // -6%
+  +0.02,  // +2%
+  -0.03,  // -3%
+  +0.04,  // +4%
+  -0.01,  // -1%
+  +0.06,  // +6%
+  -0.05,  // -5%
+  +0.08,  // +8%
+  -0.07,  // -7%
+  +0.09,  // +9%
 ];
 
 async function main() {
