@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Оплата - SmartPrice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="page page-payment">
+  <div class="page-glow" aria-hidden="true">
+    <span class="glow glow-a"></span>
+    <span class="glow glow-b"></span>
+  </div>
+
+  <header class="site-header site-header-compact">
+    <div class="container site-header__inner">
+      <a href="/" class="brand">
+        <span class="brand__mark">S</span>
+        <span><strong>SmartPrice</strong><small>Оплата</small></span>
+      </a>
+      <nav class="site-nav">
+        <a href="/delivery">← Доставка</a>
+      </nav>
+      <div class="checkout-steps">
+        <span class="checkout-step is-done">1. Доставка ✓</span>
+        <span class="checkout-step-sep">→</span>
+        <span class="checkout-step is-active">2. Оплата</span>
+        <span class="checkout-step-sep">→</span>
+        <span class="checkout-step">3. Отслеживание</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="payment-layout container">
+
+    <section class="panel payment-panel reveal-up">
+      <span class="eyebrow eyebrow-soft">Шаг 2</span>
+      <h2>Данные карты</h2>
+      <p class="panel-copy">Мы сохраняем только последние 4 цифры карты. CVV не хранится.</p>
+
+      <div class="card-preview" id="cardPreview">
+        <div class="card-preview__type" id="previewCardType">VISA</div>
+        <div class="card-preview__number" id="previewNumber">•••• •••• •••• ••••</div>
+        <div class="card-preview__bottom">
+          <div>
+            <div class="card-preview__label">Держатель</div>
+            <div class="card-preview__value" id="previewHolder">ВАШЕ ИМЯ</div>
+          </div>
+          <div>
+            <div class="card-preview__label">Срок</div>
+            <div class="card-preview__value" id="previewExpiry">ММ/ГГ</div>
+          </div>
+        </div>
+      </div>
+
+      <form id="paymentForm" class="payment-form">
+        <label class="field">
+          <span class="field__label">Номер карты *</span>
+          <input id="pCardNumber" type="text" inputmode="numeric" placeholder="1234 5678 9012 3456" maxlength="19" autocomplete="cc-number" required>
+        </label>
+        <label class="field">
+          <span class="field__label">Имя держателя *</span>
+          <input id="pHolder" type="text" placeholder="MEDET MUSTAFIN" autocomplete="cc-name" required>
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Срок действия *</span>
+            <input id="pExpiry" type="text" inputmode="numeric" placeholder="MM/ГГ" maxlength="5" autocomplete="cc-exp" required>
+          </label>
+          <label class="field">
+            <span class="field__label">CVV *</span>
+            <input id="pCvv" type="text" inputmode="numeric" placeholder="123" maxlength="3" autocomplete="cc-csc" required>
+          </label>
+        </div>
+
+        <div id="savedCards" class="saved-cards hidden"></div>
+        <div id="orderSummary" class="order-summary-block"></div>
+        <div id="paymentError" class="form-message form-message-error"></div>
+
+        <button id="submitPaymentBtn" class="btn btn-primary btn-block" type="submit">
+          Оплатить
+        </button>
+      </form>
+    </section>
+
+    <section class="panel payment-info-panel reveal-up delay-1">
+      <span class="eyebrow eyebrow-soft">Ваш заказ</span>
+      <h2>Состав заказа</h2>
+      <div id="orderItems" class="order-items-list"></div>
+      <div class="order-total-line">
+        <span>Итого к оплате</span>
+        <strong id="orderTotalBig">—</strong>
+      </div>
+      <div class="payment-security">
+        <span>🔒</span>
+        <div>
+          <strong>Защищённая оплата</strong>
+          <p>Данные передаются по защищённому каналу. CVV нигде не сохраняется.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/payment.js"></script>
+</body>
+</html>

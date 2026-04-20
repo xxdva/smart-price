@@ -16,8 +16,8 @@ const state = {
   searchSubmitted: false,
   selectedIds: loadStoredIds(SELECTION_STORAGE_KEY),
   favoriteIds: loadStoredIds(FAVORITES_STORAGE_KEY),
-  visibleCount: 12,
-  pageSize: 12,
+  visibleCount: 24,
+  pageSize: 24,
   filters: {
     query: '',
     category: 'all',

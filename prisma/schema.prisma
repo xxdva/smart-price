@@ -7,22 +7,24 @@ datasource db {
 }
 
 model Product {
-  id        Int        @id @default(autoincrement())
-  name      String
-  icon      String     @default("📦")
-  imageUrl  String     @default("")
-  prices    Price[]
-  cartItems CartItem[]
-  reviews   Review[]
+  id         Int         @id @default(autoincrement())
+  name       String
+  icon       String      @default("📦")
+  imageUrl   String      @default("")
+  prices     Price[]
+  cartItems  CartItem[]
+  reviews    Review[]
+  orderItems OrderItem[]
 }
 
 model Store {
-  id        Int           @id @default(autoincrement())
-  name      String
-  url       String        @default("")
-  prices    Price[]
-  cartItems CartItem[]
-  ratings   StoreRating[]
+  id         Int           @id @default(autoincrement())
+  name       String
+  url        String        @default("")
+  prices     Price[]
+  cartItems  CartItem[]
+  ratings    StoreRating[]
+  orderItems OrderItem[]
 }
 
 model Price {
@@ -44,6 +46,66 @@ model User {
   cartItems    CartItem[]
   reviews      Review[]
   storeRatings StoreRating[]
+  addresses    Address[]
+  paymentCards PaymentCard[]
+  orders       Order[]
+}
+
+model Address {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  phone     String
+  city      String   @default("Алматы")
+  street    String
+  house     String
+  apartment String   @default("")
+  lat       Float    @default(0)
+  lng       Float    @default(0)
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model PaymentCard {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  last4       String
+  cardType    String   @default("visa")
+  expiryMonth Int
+  expiryYear  Int
+  holder      String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  orders      Order[]
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  user       User        @relation(fields: [userId], references: [id])
+  addressId  Int
+  address    Address     @relation(fields: [addressId], references: [id])
+  cardId     Int
+  card       PaymentCard @relation(fields: [cardId], references: [id])
+  status     String      @default("paid")
+  totalPrice Int
+  createdAt  DateTime    @default(now())
+  items      OrderItem[]
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  storeId   Int
+  store     Store   @relation(fields: [storeId], references: [id])
+  price     Int
+  name      String
 }
 
 model Review {

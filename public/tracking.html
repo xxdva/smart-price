@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Отслеживание заказа - SmartPrice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="page page-tracking">
+
+  <div id="trackingMap" class="tracking-map"></div>
+
+  <div class="tracking-card" id="trackingCard">
+    <div class="tracking-card__header">
+      <a href="/" class="brand">
+        <span class="brand__mark">S</span>
+        <span><strong>SmartPrice</strong></span>
+      </a>
+      <span class="checkout-step is-done">Оплачено ✓</span>
+    </div>
+
+    <div class="tracking-status-bar">
+      <div class="tracking-step" id="step1">
+        <div class="tracking-step__dot"></div>
+        <div class="tracking-step__label">Заказ принят</div>
+      </div>
+      <div class="tracking-step-line"></div>
+      <div class="tracking-step" id="step2">
+        <div class="tracking-step__dot"></div>
+        <div class="tracking-step__label">Курьер выехал</div>
+      </div>
+      <div class="tracking-step-line"></div>
+      <div class="tracking-step" id="step3">
+        <div class="tracking-step__dot"></div>
+        <div class="tracking-step__label">Доставлен</div>
+      </div>
+    </div>
+
+    <div class="tracking-eta" id="trackingEta">
+      <span class="tracking-eta__icon">🏍️</span>
+      <div>
+        <strong id="etaLabel">Курьер в пути</strong>
+        <span id="etaTime" class="muted-text"></span>
+      </div>
+    </div>
+
+    <div class="tracking-order-info" id="trackingOrderInfo"></div>
+
+    <div class="tracking-address" id="trackingAddress"></div>
+
+    <div class="tracking-actions">
+      <a href="/" class="btn btn-secondary">На главную</a>
+      <a href="/#catalog" class="btn btn-ghost">Продолжить покупки</a>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/tracking.js"></script>
+</body>
+</html>

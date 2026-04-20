@@ -61,7 +61,10 @@
             <span class="eyebrow">Корзина</span>
             <h2>Сохраненные товары</h2>
           </div>
-          <button id="clearCartBtn" class="btn btn-ghost" type="button">Очистить корзину</button>
+          <div style="display:flex;gap:8px">
+            <button id="clearCartBtn" class="btn btn-ghost" type="button">Очистить</button>
+            <a id="checkoutLink" href="/delivery" class="btn btn-primary" style="display:none">Оформить заказ →</a>
+          </div>
         </div>
         <div id="cartSummary" class="summary-banner hidden"></div>
         <div id="cartList" class="stack-list"></div>
@@ -104,39 +107,7 @@
     </section>
   </main>
 
-  <div id="checkoutModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
-    <div class="modal__backdrop" data-close-checkout="true"></div>
-    <div class="modal__dialog modal__dialog-narrow">
-      <button id="closeCheckoutBtn" class="modal__close" type="button" aria-label="Закрыть">×</button>
-      <div class="checkout-modal">
-        <span class="eyebrow eyebrow-soft">Оплата</span>
-        <h2 id="checkoutTitle">Оформление заказа</h2>
-        <p class="muted-text">Заполните данные для подтверждения заказа. После успешной оплаты корзина будет очищена.</p>
-
-        <form id="checkoutForm" class="stack-form">
-          <label class="field">
-            <span class="field__label">Имя получателя</span>
-            <input id="checkoutName" name="checkoutName" type="text" placeholder="Например: Медет" required>
-          </label>
-          <label class="field">
-            <span class="field__label">Телефон</span>
-            <input id="checkoutPhone" name="checkoutPhone" type="tel" placeholder="+7 700 000 00 00" required>
-          </label>
-          <label class="field">
-            <span class="field__label">Номер карты</span>
-            <input id="checkoutCard" name="checkoutCard" type="text" inputmode="numeric" placeholder="1234 5678 9012 3456" required>
-          </label>
-          <label class="field">
-            <span class="field__label">Адрес доставки</span>
-            <input id="checkoutAddress" name="checkoutAddress" type="text" placeholder="Город, улица, дом" required>
-          </label>
-          <div id="checkoutSummary" class="summary-banner"></div>
-          <div id="checkoutError" class="form-message form-message-error"></div>
-          <button id="submitCheckoutBtn" class="btn btn-primary btn-block" type="submit">Оплатить сейчас</button>
-        </form>
-      </div>
-    </div>
-  </div>
+  <!-- checkout moved to /delivery → /payment → /tracking -->
 
   <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
 

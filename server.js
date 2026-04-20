@@ -463,11 +463,11 @@ function getProductPhotoUrl(name, categoryKey) {
 function resolveProductImage(name, storedImageUrl, categoryKey) {
   const normalizedUrl = normalizeText(storedImageUrl);
 
-  if (normalizedUrl && !LEGACY_AUTO_ASSIGNED_IMAGE_URLS.has(normalizedUrl)) {
+  if (normalizedUrl && !LEGACY_AUTO_ASSIGNED_IMAGE_URLS.has(normalizedUrl) && !normalizedUrl.startsWith('data:')) {
     return normalizedUrl;
   }
 
-  return buildProductImage(name, categoryKey);
+  return null;
 }
 
 function buildProductImage(name, categoryKey) {
@@ -598,7 +598,7 @@ function buildProductImage(name, categoryKey) {
     </svg>
   `;
 
-  return encodeSvg(svg);
+  return svg;
 }
 
 function buildProductDescription(name, categoryLabel) {
@@ -661,7 +661,7 @@ function enrichProduct(product) {
     id: product.id,
     name,
     icon: normalizedIcon,
-    imageUrl: resolveProductImage(name, product.imageUrl, categoryKey),
+    imageUrl: resolveProductImage(name, product.imageUrl, categoryKey) ?? `/api/product-image/${product.id}`,
     category: meta.label,
     categoryKey,
     accent: meta.accent,
@@ -795,6 +795,9 @@ app.get('/register', (req, res) => {
   return sendPage(res, 'register.html');
 });
 app.get('/cabinet', requirePageAuth, (req, res) => sendPage(res, 'cabinet.html'));
+app.get('/delivery', requirePageAuth, (req, res) => sendPage(res, 'delivery.html'));
+app.get('/payment', requirePageAuth, (req, res) => sendPage(res, 'payment.html'));
+app.get('/tracking/:orderId', requirePageAuth, (req, res) => sendPage(res, 'tracking.html'));
 app.get('/admin', (req, res) => sendPage(res, 'admin.html'));
 
 app.post('/api/register', async (req, res) => {
@@ -902,6 +905,21 @@ app.get('/api/home', async (req, res) => {
 app.get('/api/products', async (req, res) => {
   const products = await getAllProducts();
   res.json(products);
+});
+
+app.get('/api/product-image/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).end();
+
+  const product = await prisma.product.findUnique({ where: { id } });
+  if (!product) return res.status(404).end();
+
+  const categoryKey = inferCategoryKey(product.name);
+  const svg = buildProductImage(product.name, categoryKey);
+
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+  res.send(svg);
 });
 
 app.get('/api/search', async (req, res) => {
@@ -1417,6 +1435,180 @@ app.post('/api/store-ratings', async (req, res) => {
   });
 
   res.json(result);
+});
+
+// ── Geocode proxy (Nominatim needs server-side User-Agent) ─
+function cleanAddressQuery(q) {
+  return q
+    .replace(/(^|\s+)(пр\.|пр |проспект |ул\.|ул |улица |пер\.|пер |переулок |бул\.|бул |бульвар |мкр\.|мкр |микрорайон |д\.|кв\.)/gi, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+app.get('/api/geocode', async (req, res) => {
+  const raw = String(req.query.q || '').trim();
+  if (!raw) return res.json([]);
+
+  const queries = Array.from(new Set([raw, cleanAddressQuery(raw)]));
+  const headers = { 'User-Agent': 'SmartPrice/1.0 (air95003@gmail.com)', 'Accept-Language': 'ru' };
+
+  for (const q of queries) {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=3&accept-language=ru`;
+      const response = await fetch(url, { headers });
+      const data = await response.json();
+      if (data.length > 0) {
+        return res.json(data.map(r => ({ lat: parseFloat(r.lat), lng: parseFloat(r.lon), display: r.display_name })));
+      }
+    } catch (e) {}
+  }
+  res.json([]);
+});
+
+// ── Addresses ─────────────────────────────────────────────
+app.get('/api/addresses', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Нужна авторизация' });
+  const addresses = await prisma.address.findMany({
+    where: { userId: req.session.userId },
+    orderBy: { isDefault: 'desc' }
+  });
+  res.json(addresses);
+});
+
+app.post('/api/addresses', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Нужна авторизация' });
+  const { name, phone, city, street, house, apartment, lat, lng } = req.body;
+  if (!name || !phone || !street || !house) {
+    return res.status(400).json({ error: 'Заполните все обязательные поля' });
+  }
+  if (req.body.isDefault) {
+    await prisma.address.updateMany({ where: { userId: req.session.userId }, data: { isDefault: false } });
+  }
+  const address = await prisma.address.create({
+    data: {
+      userId: req.session.userId,
+      name: String(name).trim(),
+      phone: String(phone).trim(),
+      city: String(city || 'Астана').trim(),
+      street: String(street).trim(),
+      house: String(house).trim(),
+      apartment: String(apartment || '').trim(),
+      lat: Number(lat) || 0,
+      lng: Number(lng) || 0,
+      isDefault: Boolean(req.body.isDefault)
+    }
+  });
+  res.json(address);
+});
+
+// ── Payment cards ──────────────────────────────────────────
+app.get('/api/cards', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Нужна авторизация' });
+  const cards = await prisma.paymentCard.findMany({
+    where: { userId: req.session.userId },
+    orderBy: { isDefault: 'desc' }
+  });
+  res.json(cards);
+});
+
+app.post('/api/cards', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Нужна авторизация' });
+  const { last4, cardType, expiryMonth, expiryYear, holder } = req.body;
+  if (!last4 || !expiryMonth || !expiryYear || !holder) {
+    return res.status(400).json({ error: 'Заполните данные карты' });
+  }
+  if (!/^\d{4}$/.test(last4)) return res.status(400).json({ error: 'Последние 4 цифры карты некорректны' });
+  if (req.body.isDefault) {
+    await prisma.paymentCard.updateMany({ where: { userId: req.session.userId }, data: { isDefault: false } });
+  }
+  const card = await prisma.paymentCard.create({
+    data: {
+      userId: req.session.userId,
+      last4: String(last4),
+      cardType: String(cardType || 'visa').toLowerCase(),
+      expiryMonth: Number(expiryMonth),
+      expiryYear: Number(expiryYear),
+      holder: String(holder).trim().toUpperCase(),
+      isDefault: Boolean(req.body.isDefault)
+    }
+  });
+  res.json(card);
+});
+
+// ── Orders ─────────────────────────────────────────────────
+app.post('/api/orders', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Нужна авторизация' });
+  const { addressId, cardId } = req.body;
+  if (!addressId || !cardId) return res.status(400).json({ error: 'Укажите адрес и карту' });
+
+  const [address, card, cartItems] = await Promise.all([
+    prisma.address.findFirst({ where: { id: Number(addressId), userId: req.session.userId } }),
+    prisma.paymentCard.findFirst({ where: { id: Number(cardId), userId: req.session.userId } }),
+    prisma.cartItem.findMany({
+      where: { userId: req.session.userId },
+      include: { product: true, store: true }
+    })
+  ]);
+
+  if (!address) return res.status(400).json({ error: 'Адрес не найден' });
+  if (!card) return res.status(400).json({ error: 'Карта не найдена' });
+  if (!cartItems.length) return res.status(400).json({ error: 'Корзина пуста' });
+
+  const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
+
+  const order = await prisma.order.create({
+    data: {
+      userId: req.session.userId,
+      addressId: address.id,
+      cardId: card.id,
+      status: 'delivering',
+      totalPrice,
+      items: {
+        create: cartItems.map((item) => ({
+          productId: item.productId,
+          storeId: item.storeId,
+          price: item.price,
+          name: item.product.name
+        }))
+      }
+    },
+    include: {
+      address: true,
+      card: true,
+      items: { include: { product: true, store: true } }
+    }
+  });
+
+  await prisma.cartItem.deleteMany({ where: { userId: req.session.userId } });
+
+  res.json(order);
+});
+
+app.get('/api/orders/:id', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Нужна авторизация' });
+  const id = Number(req.params.id);
+  const order = await prisma.order.findFirst({
+    where: { id, userId: req.session.userId },
+    include: {
+      address: true,
+      card: true,
+      items: { include: { product: { select: { id: true, name: true, imageUrl: true } }, store: true } }
+    }
+  });
+  if (!order) return res.status(404).json({ error: 'Заказ не найден' });
+  res.json(order);
+});
+
+app.patch('/api/orders/:id/status', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Нужна авторизация' });
+  const id = Number(req.params.id);
+  const { status } = req.body;
+  const allowed = ['paid', 'delivering', 'delivered'];
+  if (!allowed.includes(status)) return res.status(400).json({ error: 'Некорректный статус' });
+  const order = await prisma.order.findFirst({ where: { id, userId: req.session.userId } });
+  if (!order) return res.status(404).json({ error: 'Заказ не найден' });
+  const updated = await prisma.order.update({ where: { id }, data: { status } });
+  res.json(updated);
 });
 
 const PORT = Number(process.env.PORT) || 3000;

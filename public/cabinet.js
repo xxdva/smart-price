@@ -16,17 +16,7 @@ const cabinetDom = {
   recommendationsGrid: document.getElementById('recommendationsGrid'),
   clearCartBtn: document.getElementById('clearCartBtn'),
   clearHistoryBtn: document.getElementById('clearHistoryBtn'),
-  toastStack: document.getElementById('toastStack'),
-  checkoutModal: document.getElementById('checkoutModal'),
-  closeCheckoutBtn: document.getElementById('closeCheckoutBtn'),
-  checkoutForm: document.getElementById('checkoutForm'),
-  checkoutSummary: document.getElementById('checkoutSummary'),
-  checkoutError: document.getElementById('checkoutError'),
-  submitCheckoutBtn: document.getElementById('submitCheckoutBtn'),
-  checkoutName: document.getElementById('checkoutName'),
-  checkoutPhone: document.getElementById('checkoutPhone'),
-  checkoutCard: document.getElementById('checkoutCard'),
-  checkoutAddress: document.getElementById('checkoutAddress')
+  toastStack: document.getElementById('toastStack')
 };
 
 initCabinet();
@@ -64,14 +54,6 @@ function bindCabinetEvents() {
   cabinetDom.clearCartBtn.addEventListener('click', clearCart);
   cabinetDom.clearHistoryBtn.addEventListener('click', clearHistory);
   cabinetDom.cartList.addEventListener('click', handleCartClick);
-  cabinetDom.cartSummary.addEventListener('click', handleCartSummaryClick);
-  cabinetDom.closeCheckoutBtn.addEventListener('click', closeCheckout);
-  cabinetDom.checkoutModal.addEventListener('click', (event) => {
-    if (event.target.matches('[data-close-checkout="true"]')) {
-      closeCheckout();
-    }
-  });
-  cabinetDom.checkoutForm.addEventListener('submit', handleCheckoutSubmit);
 }
 
 function renderCabinet() {
@@ -111,8 +93,11 @@ function renderCart() {
   const items = cabinetState.cabinet.cart;
   const stats = cabinetState.cabinet.stats;
 
+  const checkoutLink = document.getElementById('checkoutLink');
+
   if (!items.length) {
     cabinetDom.cartSummary.classList.add('hidden');
+    if (checkoutLink) checkoutLink.style.display = 'none';
     cabinetDom.cartList.innerHTML = createEmptyState(
       'Корзина пустая',
       'Выберите товары в каталоге и сохраните лучшие офферы сюда.'
@@ -120,14 +105,16 @@ function renderCart() {
     return;
   }
 
+  if (checkoutLink) checkoutLink.style.display = '';
+
   cabinetDom.cartSummary.classList.remove('hidden');
   cabinetDom.cartSummary.innerHTML = `
     <div>
       <strong>Итого: ${formatPrice(stats.cartTotal)} ₸</strong>
-      <span>Потенциальная экономия относительно более дорогих офферов: ${formatPrice(stats.cartSavings)} ₸</span>
+      <span>Экономия: ${formatPrice(stats.cartSavings)} ₸</span>
     </div>
     <div class="summary-banner__actions">
-      <button class="btn btn-primary" type="button" data-cart-action="checkout">Оплатить</button>
+      <a class="btn btn-primary" href="/delivery">Оформить заказ →</a>
       <a class="btn btn-secondary" href="/#catalog">Продолжить покупки</a>
     </div>
   `;
@@ -204,12 +191,6 @@ function renderRecommendations() {
     .join('');
 }
 
-function handleCartSummaryClick(event) {
-  const button = event.target.closest('[data-cart-action="checkout"]');
-  if (!button) return;
-  openCheckout();
-}
-
 async function handleCartClick(event) {
   const button = event.target.closest('[data-remove-cart]');
   if (!button) return;
@@ -241,72 +222,6 @@ async function clearCart() {
     showToast('Корзина очищена.', 'info');
   } catch (error) {
     showToast(error.message, 'error');
-  }
-}
-
-function openCheckout() {
-  if (!cabinetState.cabinet?.cart.length) {
-    showToast('Корзина пустая, оплачивать пока нечего.', 'info');
-    return;
-  }
-
-  cabinetDom.checkoutError.textContent = '';
-  cabinetDom.checkoutSummary.innerHTML = `
-    <div>
-      <strong>${cabinetState.cabinet.cart.length} ${pluralize(cabinetState.cabinet.cart.length, ['товар', 'товара', 'товаров'])}</strong>
-      <span>Сумма заказа</span>
-    </div>
-    <div>
-      <strong>${formatPrice(cabinetState.cabinet.stats.cartTotal)} ₸</strong>
-      <span>Экономия: ${formatPrice(cabinetState.cabinet.stats.cartSavings)} ₸</span>
-    </div>
-  `;
-
-  cabinetDom.checkoutModal.classList.remove('hidden');
-  document.body.classList.add('modal-open');
-}
-
-function closeCheckout() {
-  cabinetDom.checkoutModal.classList.add('hidden');
-  document.body.classList.remove('modal-open');
-}
-
-async function handleCheckoutSubmit(event) {
-  event.preventDefault();
-
-  const name = cabinetDom.checkoutName.value.trim();
-  const phone = cabinetDom.checkoutPhone.value.trim();
-  const card = cabinetDom.checkoutCard.value.replace(/\s+/g, '');
-  const address = cabinetDom.checkoutAddress.value.trim();
-
-  if (!name || !phone || !card || !address) {
-    cabinetDom.checkoutError.textContent = 'Заполните все поля для оплаты.';
-    return;
-  }
-
-  if (card.length < 16) {
-    cabinetDom.checkoutError.textContent = 'Введите корректный номер карты.';
-    return;
-  }
-
-  cabinetDom.checkoutError.textContent = '';
-  cabinetDom.submitCheckoutBtn.disabled = true;
-  cabinetDom.submitCheckoutBtn.textContent = 'Обрабатываем оплату...';
-
-  try {
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    await fetchJson('/api/cart', { method: 'DELETE' });
-    cabinetState.cabinet.cart = [];
-    recalculateCartStats();
-    renderCabinet();
-    closeCheckout();
-    cabinetDom.checkoutForm.reset();
-    showToast('Оплата прошла успешно. Заказ оформлен.', 'success');
-  } catch (error) {
-    cabinetDom.checkoutError.textContent = error.message;
-  } finally {
-    cabinetDom.submitCheckoutBtn.disabled = false;
-    cabinetDom.submitCheckoutBtn.textContent = 'Оплатить сейчас';
   }
 }
 
