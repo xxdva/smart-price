@@ -48,8 +48,7 @@ async function showAdminPanel() {
   bindTabSwitcher();
   bindAdminEvents();
   await reloadAdminData();
-  await loadAnalytics();
-  await loadMonetization();
+  await Promise.all([loadAnalytics(), loadMonetization(), loadOrders(), loadUsers()]);
 }
 
 // Auto-login if key already in session
@@ -110,6 +109,8 @@ function bindAdminEvents() {
   adminDom.priceForm.addEventListener('submit', handlePriceSubmit);
   document.getElementById('refreshAnalyticsBtn')?.addEventListener('click', loadAnalytics);
   document.getElementById('refreshMonetizationBtn')?.addEventListener('click', loadMonetization);
+  document.getElementById('refreshOrdersBtn')?.addEventListener('click', loadOrders);
+  document.getElementById('refreshUsersBtn')?.addEventListener('click', loadUsers);
   document.getElementById('sponsoredForm')?.addEventListener('submit', handleSponsoredSubmit);
 }
 
@@ -340,6 +341,9 @@ function renderStoreRatings(items) {
 }
 
 // ── Monetization tab ──────────────────────────────────────────────────────────
+let revenueChartInstance = null;
+let gmvChartInstance = null;
+
 async function loadMonetization() {
   try {
     const data = await fetchJson('/api/admin/monetization', { headers: adminHeaders() });
@@ -348,9 +352,50 @@ async function loadMonetization() {
     renderSponsoredTable(data.listings);
     renderAffiliateClicks(data.recentClicks);
     renderSubscriptions(data.subscriptions);
+    if (data.charts) renderRevenueCharts(data.charts);
   } catch (e) {
     document.getElementById('revenueKpi').innerHTML =
       `<p style="color:var(--danger)">Ошибка: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function renderRevenueCharts(charts) {
+  const gridColor = 'rgba(0,0,0,0.06)';
+  const textColor = '#6f6358';
+  const baseOpts = {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 } } },
+      y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 }, precision: 0 }, beginAtZero: true }
+    }
+  };
+
+  if (revenueChartInstance) revenueChartInstance.destroy();
+  if (gmvChartInstance) gmvChartInstance.destroy();
+
+  const rCtx = document.getElementById('revenueChart');
+  if (rCtx) {
+    revenueChartInstance = new Chart(rCtx, {
+      type: 'bar',
+      data: {
+        labels: charts.days,
+        datasets: [{ data: charts.commission, backgroundColor: 'rgba(37,99,235,0.45)', borderColor: '#2563eb', borderWidth: 2, borderRadius: 5 }]
+      },
+      options: baseOpts
+    });
+  }
+
+  const gCtx = document.getElementById('gmvChart');
+  if (gCtx) {
+    gmvChartInstance = new Chart(gCtx, {
+      type: 'line',
+      data: {
+        labels: charts.days,
+        datasets: [{ data: charts.gmv, borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,0.12)', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#0f766e', tension: 0.4, fill: true }]
+      },
+      options: baseOpts
+    });
   }
 }
 
@@ -530,6 +575,150 @@ async function deactivateListing(id) {
   } catch (e) {
     alert(e.message);
   }
+}
+
+// ── Orders tab ────────────────────────────────────────────────────────────────
+async function loadOrders() {
+  try {
+    const data = await fetchJson('/api/admin/orders', { headers: adminHeaders() });
+    renderOrdersKpi(data.stats);
+    renderOrdersTable(data.orders);
+  } catch (e) {
+    document.getElementById('ordersKpi').innerHTML = `<p style="color:var(--danger)">Ошибка: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function renderOrdersKpi(stats) {
+  const kpis = [
+    { label: 'Всего заказов', value: stats.total, sub: 'за всё время' },
+    { label: 'Общий GMV', value: formatPrice(stats.totalRevenue) + ' ₸', sub: 'выручка платформы', accent: true },
+    { label: 'Средний чек', value: formatPrice(stats.avgOrder) + ' ₸', sub: 'на заказ' },
+    { label: 'Доставляется', value: stats.byStatus?.delivering || 0, sub: 'в пути сейчас' },
+    { label: 'Доставлено', value: stats.byStatus?.delivered || 0, sub: 'успешно завершено' }
+  ];
+  document.getElementById('ordersKpi').innerHTML = kpis.map(k => `
+    <div class="revenue-kpi-card ${k.accent ? 'revenue-kpi-card--accent' : ''}">
+      <div class="revenue-kpi-card__value">${escapeHtml(String(k.value))}</div>
+      <div class="revenue-kpi-card__label">${escapeHtml(k.label)}</div>
+      <div class="revenue-kpi-card__sub">${escapeHtml(k.sub)}</div>
+    </div>
+  `).join('');
+}
+
+const ORDER_STATUS_MAP = { paid: 'Оплачен', delivering: 'Доставляется', delivered: 'Доставлен', cancelled: 'Отменён' };
+const ORDER_STATUS_COLOR = { paid: '#2563eb', delivering: '#f97316', delivered: '#15803d', cancelled: '#dc2626' };
+
+function renderOrdersTable(orders) {
+  const el = document.getElementById('ordersTable');
+  if (!orders.length) { el.innerHTML = `<p class="analytics-empty">Заказов пока нет</p>`; return; }
+
+  el.innerHTML = `
+    <table class="data-table">
+      <thead>
+        <tr><th>#</th><th>Клиент</th><th>Товары</th><th>Адрес</th><th>Карта</th><th>Сумма</th><th>Дата</th><th>Статус</th><th></th></tr>
+      </thead>
+      <tbody>
+        ${orders.map(o => {
+          const date = new Date(o.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+          const items = o.items.map(i => `${i.product.icon || '📦'} ${i.product.name}`).join(', ');
+          const color = ORDER_STATUS_COLOR[o.status] || '#6f6358';
+          const label = ORDER_STATUS_MAP[o.status] || o.status;
+          return `
+            <tr>
+              <td class="muted-text" style="font-size:0.8rem">#${o.id}</td>
+              <td>
+                <strong style="font-size:0.88rem">${escapeHtml(o.user.name)}</strong>
+                <div class="muted-text" style="font-size:0.75rem">${escapeHtml(o.user.email)}</div>
+              </td>
+              <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.82rem" title="${escapeHtml(items)}">${escapeHtml(items)}</td>
+              <td style="font-size:0.82rem" class="muted-text">${escapeHtml(o.address.city)}, ${escapeHtml(o.address.street)}</td>
+              <td style="font-size:0.82rem">${escapeHtml(o.card.cardType.toUpperCase())} ••${escapeHtml(o.card.last4)}</td>
+              <td><strong>${formatPrice(o.totalPrice)} ₸</strong></td>
+              <td class="muted-text" style="font-size:0.8rem;white-space:nowrap">${date}</td>
+              <td><span style="color:${color};font-weight:700;font-size:0.8rem">${label}</span></td>
+              <td>
+                <select class="order-status-select" data-order-id="${o.id}" style="font-size:0.78rem;padding:4px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--text)">
+                  <option value="paid" ${o.status==='paid'?'selected':''}>Оплачен</option>
+                  <option value="delivering" ${o.status==='delivering'?'selected':''}>Доставляется</option>
+                  <option value="delivered" ${o.status==='delivered'?'selected':''}>Доставлен</option>
+                  <option value="cancelled" ${o.status==='cancelled'?'selected':''}>Отменён</option>
+                </select>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  el.querySelectorAll('.order-status-select').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const id = Number(sel.dataset.orderId);
+      try {
+        await fetchJson(`/api/admin/orders/${id}/status`, { method: 'PATCH', headers: adminHeaders(), body: JSON.stringify({ status: sel.value }) });
+      } catch (e) { alert(e.message); }
+    });
+  });
+}
+
+// ── Users tab ─────────────────────────────────────────────────────────────────
+async function loadUsers() {
+  try {
+    const data = await fetchJson('/api/admin/users', { headers: adminHeaders() });
+    renderUsersKpi(data.stats);
+    renderUsersGrid(data.users);
+  } catch (e) {
+    document.getElementById('usersKpi').innerHTML = `<p style="color:var(--danger)">Ошибка: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function renderUsersKpi(stats) {
+  const kpis = [
+    { label: 'Всего пользователей', value: stats.total, sub: 'зарегистрировано' },
+    { label: 'Подписчиков', value: stats.subscribers, sub: 'Premium / Business', accent: true },
+    { label: 'Конверсия', value: stats.total ? Math.round((stats.subscribers / stats.total) * 100) + '%' : '0%', sub: 'в подписку' },
+    { label: 'Общий GMV', value: formatPrice(stats.totalGMV) + ' ₸', sub: 'сумма всех заказов' }
+  ];
+  document.getElementById('usersKpi').innerHTML = kpis.map(k => `
+    <div class="revenue-kpi-card ${k.accent ? 'revenue-kpi-card--accent' : ''}">
+      <div class="revenue-kpi-card__value">${escapeHtml(String(k.value))}</div>
+      <div class="revenue-kpi-card__label">${escapeHtml(k.label)}</div>
+      <div class="revenue-kpi-card__sub">${escapeHtml(k.sub)}</div>
+    </div>
+  `).join('');
+}
+
+function renderUsersGrid(users) {
+  const el = document.getElementById('usersGrid');
+  if (!users.length) { el.innerHTML = `<p class="analytics-empty">Пользователей нет</p>`; return; }
+
+  el.innerHTML = users.map(u => {
+    const reg = new Date(u.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+    const sub = u.subscription;
+    const hasSub = sub?.status === 'active';
+    const planName = sub?.plan === 'business' ? 'Business' : sub?.plan === 'premium' ? 'Premium' : null;
+    const expiresStr = sub ? new Date(sub.expiresAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : null;
+    return `
+      <div class="user-card">
+        <div class="user-card__avatar">${escapeHtml(u.name.charAt(0).toUpperCase())}</div>
+        <div class="user-card__info">
+          <div class="user-card__name">
+            ${escapeHtml(u.name)}
+            ${u.isAdmin ? '<span class="user-card__admin-badge">Admin</span>' : ''}
+            ${hasSub ? `<span class="plan-badge plan-badge--${sub.plan}">${planName}</span>` : ''}
+          </div>
+          <div class="muted-text" style="font-size:0.78rem">${escapeHtml(u.email)}</div>
+          ${hasSub ? `<div style="font-size:0.75rem;color:var(--success)">Подписка до ${expiresStr} · ${formatPrice(sub.amount)} ₸/мес</div>` : ''}
+        </div>
+        <div class="user-card__stats">
+          <div class="user-card__stat"><strong>${u.stats.orders}</strong><span>заказов</span></div>
+          <div class="user-card__stat"><strong>${u.stats.cartItems}</strong><span>в корзине</span></div>
+          <div class="user-card__stat"><strong>${u.stats.searches}</strong><span>поисков</span></div>
+        </div>
+        <div class="user-card__date muted-text">с ${reg}</div>
+      </div>
+    `;
+  }).join('');
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

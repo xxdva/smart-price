@@ -1618,13 +1618,104 @@ app.patch('/api/orders/:id/status', async (req, res) => {
   res.json(updated);
 });
 
+// ── Admin: Orders ─────────────────────────────────────────────────────────────
+app.get('/api/admin/orders', requireAdmin, async (req, res) => {
+  const orders = await prisma.order.findMany({
+    include: {
+      user: { select: { id: true, name: true, email: true } },
+      address: { select: { city: true, street: true, name: true } },
+      card: { select: { last4: true, cardType: true } },
+      items: { include: { product: { select: { name: true, icon: true } }, store: { select: { name: true } } } }
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 200
+  });
+
+  const totalRevenue = orders.reduce((s, o) => s + o.totalPrice, 0);
+  const avgOrder = orders.length ? Math.round(totalRevenue / orders.length) : 0;
+  const byStatus = orders.reduce((acc, o) => { acc[o.status] = (acc[o.status] || 0) + 1; return acc; }, {});
+
+  res.json({ orders, stats: { total: orders.length, totalRevenue, avgOrder, byStatus } });
+});
+
+app.patch('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const { status } = req.body;
+  const allowed = ['paid', 'delivering', 'delivered', 'cancelled'];
+  if (!allowed.includes(status)) return res.status(400).json({ error: 'Некорректный статус' });
+  const updated = await prisma.order.update({ where: { id }, data: { status } });
+  res.json(updated);
+});
+
+// ── Admin: Users ──────────────────────────────────────────────────────────────
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  const users = await prisma.user.findMany({
+    include: {
+      subscription: true,
+      _count: { select: { cartItems: true, orders: true, searches: true } }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const totalOrders = await prisma.order.aggregate({ _sum: { totalPrice: true } });
+
+  res.json({
+    users: users.map(u => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      isAdmin: u.isAdmin,
+      createdAt: u.createdAt,
+      subscription: u.subscription,
+      stats: u._count
+    })),
+    stats: {
+      total: users.length,
+      subscribers: users.filter(u => u.subscription?.status === 'active').length,
+      totalGMV: totalOrders._sum.totalPrice || 0
+    }
+  });
+});
+
+// ── Subscriptions ─────────────────────────────────────────────────────────────
+const SUBSCRIPTION_PLANS = { free: 0, premium: 990, business: 2490 };
+
+app.get('/api/my-subscription', requireApiAuth, async (req, res) => {
+  const sub = await prisma.subscription.findUnique({ where: { userId: req.session.userId } });
+  res.json(sub || null);
+});
+
+app.post('/api/subscribe', requireApiAuth, async (req, res) => {
+  const { plan } = req.body;
+  if (!plan || !(plan in SUBSCRIPTION_PLANS) || plan === 'free') {
+    return res.status(400).json({ error: 'Неверный план подписки' });
+  }
+  const expiresAt = new Date();
+  expiresAt.setMonth(expiresAt.getMonth() + 1);
+
+  const sub = await prisma.subscription.upsert({
+    where: { userId: req.session.userId },
+    create: { userId: req.session.userId, plan, amount: SUBSCRIPTION_PLANS[plan], status: 'active', expiresAt },
+    update: { plan, amount: SUBSCRIPTION_PLANS[plan], status: 'active', expiresAt }
+  });
+  res.json(sub);
+});
+
+app.get('/premium', (req, res) => sendPage(res, 'premium.html'));
+
 // ── Monetization ──────────────────────────────────────────────────────────────
 
 app.get('/api/admin/monetization', requireAdmin, async (req, res) => {
   const now = new Date();
   const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+  const days14Ago = new Date(now - 14 * 86400000);
 
-  const [activeListings, allListings, recentClicks, activeSubscriptions, totalClicks, totalCommission] = await Promise.all([
+  const last14 = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(now - (13 - i) * 86400000);
+    return d.toISOString().slice(0, 10);
+  });
+
+  const [activeListings, allListings, recentClicks, activeSubscriptions, totalClicks, totalCommission, clicksLast14, ordersLast14] = await Promise.all([
     prisma.sponsoredListing.findMany({
       where: { isActive: true, expiresAt: { gte: now } },
       include: { store: true, product: { select: { id: true, name: true, icon: true } } },
@@ -1650,7 +1741,15 @@ app.get('/api/admin/monetization', requireAdmin, async (req, res) => {
       orderBy: { createdAt: 'desc' }
     }),
     prisma.affiliateClick.count(),
-    prisma.affiliateClick.aggregate({ _sum: { commission: true } })
+    prisma.affiliateClick.aggregate({ _sum: { commission: true } }),
+    prisma.affiliateClick.findMany({
+      where: { clickedAt: { gte: days14Ago } },
+      select: { clickedAt: true, commission: true }
+    }),
+    prisma.order.findMany({
+      where: { createdAt: { gte: days14Ago } },
+      select: { createdAt: true, totalPrice: true }
+    })
   ]);
 
   const sponsorRevenue = activeListings.reduce((s, l) => s + l.monthlyFee, 0);
@@ -1659,6 +1758,17 @@ app.get('/api/admin/monetization', requireAdmin, async (req, res) => {
 
   const monthClicks = recentClicks.filter(c => new Date(c.clickedAt) >= monthAgo);
   const monthCommission = monthClicks.reduce((s, c) => s + c.commission, 0);
+
+  const dailyCommission = Object.fromEntries(last14.map(d => [d, 0]));
+  const dailyGMV = Object.fromEntries(last14.map(d => [d, 0]));
+  clicksLast14.forEach(c => {
+    const d = c.clickedAt.toISOString().slice(0, 10);
+    if (d in dailyCommission) dailyCommission[d] += c.commission;
+  });
+  ordersLast14.forEach(o => {
+    const d = o.createdAt.toISOString().slice(0, 10);
+    if (d in dailyGMV) dailyGMV[d] += o.totalPrice;
+  });
 
   res.json({
     revenue: {
@@ -1675,6 +1785,11 @@ app.get('/api/admin/monetization', requireAdmin, async (req, res) => {
       totalClicks,
       activeListings: activeListings.length,
       activeSubscriptions: activeSubscriptions.length
+    },
+    charts: {
+      days: last14.map(d => d.slice(5)),
+      commission: last14.map(d => dailyCommission[d]),
+      gmv: last14.map(d => Math.round(dailyGMV[d] / 1000))
     }
   });
 });

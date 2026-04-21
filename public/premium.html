@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Подписка Premium — SmartPrice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="page page-premium">
+  <div class="page-glow" aria-hidden="true">
+    <span class="glow glow-a"></span>
+    <span class="glow glow-b"></span>
+  </div>
+
+  <header class="site-header site-header-compact">
+    <div class="container site-header__inner">
+      <a href="/" class="brand">
+        <span class="brand__mark">S</span>
+        <span><strong>SmartPrice</strong><small>Подписка</small></span>
+      </a>
+      <nav class="site-nav">
+        <a href="/">Главная</a>
+        <a href="/cabinet">Кабинет</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container premium-main">
+
+    <div class="premium-hero reveal-up">
+      <span class="eyebrow eyebrow-soft">Подписки SmartPrice</span>
+      <h1>Экономьте больше с<br><span class="premium-hero__accent">Premium-доступом</span></h1>
+      <p class="premium-hero__sub">Уведомления о снижении цен, расширенная история поиска<br>и приоритетная поддержка — всё в одном плане.</p>
+    </div>
+
+    <div id="currentPlanBanner" class="current-plan-banner hidden reveal-up"></div>
+
+    <div class="pricing-grid reveal-up delay-1">
+
+      <!-- Free -->
+      <div class="pricing-card">
+        <div class="pricing-card__header">
+          <span class="pricing-card__icon">🆓</span>
+          <h2 class="pricing-card__name">Бесплатно</h2>
+          <div class="pricing-card__price">
+            <span class="pricing-card__amount">0 ₸</span>
+            <span class="pricing-card__period">/месяц</span>
+          </div>
+        </div>
+        <ul class="pricing-card__features">
+          <li class="feat feat--yes">Сравнение цен в каталоге</li>
+          <li class="feat feat--yes">Добавление в корзину</li>
+          <li class="feat feat--yes">История поиска — 10 запросов</li>
+          <li class="feat feat--yes">Базовая аналитика сбережений</li>
+          <li class="feat feat--no">Уведомления о снижении цен</li>
+          <li class="feat feat--no">История поиска — 100 запросов</li>
+          <li class="feat feat--no">Эксклюзивные акции магазинов</li>
+          <li class="feat feat--no">Приоритетная поддержка</li>
+        </ul>
+        <div class="pricing-card__action">
+          <button class="btn btn-secondary btn-block" disabled>Текущий план</button>
+        </div>
+      </div>
+
+      <!-- Premium (highlighted) -->
+      <div class="pricing-card pricing-card--featured">
+        <div class="pricing-card__badge">Популярный</div>
+        <div class="pricing-card__header">
+          <span class="pricing-card__icon">⭐</span>
+          <h2 class="pricing-card__name">Premium</h2>
+          <div class="pricing-card__price">
+            <span class="pricing-card__amount">990 ₸</span>
+            <span class="pricing-card__period">/месяц</span>
+          </div>
+          <div class="pricing-card__save">Экономьте тысячи ₸ ежемесячно</div>
+        </div>
+        <ul class="pricing-card__features">
+          <li class="feat feat--yes">Сравнение цен в каталоге</li>
+          <li class="feat feat--yes">Добавление в корзину</li>
+          <li class="feat feat--yes feat--highlight">История поиска — 100 запросов</li>
+          <li class="feat feat--yes">Базовая аналитика сбережений</li>
+          <li class="feat feat--yes feat--highlight">Уведомления о снижении цен</li>
+          <li class="feat feat--yes feat--highlight">Эксклюзивные акции магазинов</li>
+          <li class="feat feat--yes">Приоритетная поддержка</li>
+          <li class="feat feat--no">API-доступ и аналитика</li>
+        </ul>
+        <div class="pricing-card__action">
+          <button class="btn btn-primary btn-block subscribe-btn" data-plan="premium" id="btnPremium">
+            Оформить Premium
+          </button>
+          <div id="msgPremium" class="form-message" style="margin-top:8px;text-align:center"></div>
+        </div>
+      </div>
+
+      <!-- Business -->
+      <div class="pricing-card pricing-card--business">
+        <div class="pricing-card__header">
+          <span class="pricing-card__icon">🚀</span>
+          <h2 class="pricing-card__name">Business</h2>
+          <div class="pricing-card__price">
+            <span class="pricing-card__amount">2 490 ₸</span>
+            <span class="pricing-card__period">/месяц</span>
+          </div>
+        </div>
+        <ul class="pricing-card__features">
+          <li class="feat feat--yes">Всё из Premium</li>
+          <li class="feat feat--yes feat--highlight">API-доступ к ценам</li>
+          <li class="feat feat--yes feat--highlight">Расширенная аналитика</li>
+          <li class="feat feat--yes feat--highlight">Белый лейбл (брендирование)</li>
+          <li class="feat feat--yes">Выделенный аккаунт-менеджер</li>
+          <li class="feat feat--yes">SLA 99.9% uptime</li>
+          <li class="feat feat--yes">Мультиаккаунт (до 5 пользователей)</li>
+          <li class="feat feat--yes feat--highlight">Ранний доступ к новым функциям</li>
+        </ul>
+        <div class="pricing-card__action">
+          <button class="btn btn-block subscribe-btn pricing-card__btn-business" data-plan="business" id="btnBusiness">
+            Оформить Business
+          </button>
+          <div id="msgBusiness" class="form-message" style="margin-top:8px;text-align:center"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Trust block -->
+    <div class="premium-trust reveal-up delay-2">
+      <div class="premium-trust__item">
+        <span class="premium-trust__icon">🔒</span>
+        <span>Безопасная оплата</span>
+      </div>
+      <div class="premium-trust__item">
+        <span class="premium-trust__icon">↩️</span>
+        <span>Отмена в любой момент</span>
+      </div>
+      <div class="premium-trust__item">
+        <span class="premium-trust__icon">📞</span>
+        <span>Поддержка 24/7</span>
+      </div>
+      <div class="premium-trust__item">
+        <span class="premium-trust__icon">✅</span>
+        <span>Первый месяц бесплатно</span>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="toastStack" class="toast-stack"></div>
+  <script src="/premium.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 const cabinetState = {
   cabinet: null,
-  products: []
+  products: [],
+  subscription: null
 };
 
 const cabinetDom = {
@@ -28,15 +29,18 @@ async function initCabinet() {
   cabinetDom.recommendationsGrid.innerHTML = createMiniSkeletons();
 
   try {
-    const [cabinet, products] = await Promise.all([
+    const [cabinet, products, subscription] = await Promise.all([
       fetchJson('/api/cabinet'),
-      fetchJson('/api/products')
+      fetchJson('/api/products'),
+      fetchJson('/api/my-subscription').catch(() => null)
     ]);
 
     cabinetState.cabinet = cabinet;
     cabinetState.products = products;
+    cabinetState.subscription = subscription;
 
     renderCabinet();
+    renderSubscriptionInfo(subscription);
   } catch (error) {
     if (error.status === 401) {
       window.location.href = `/login?redirect=${encodeURIComponent('/cabinet')}`;
@@ -239,6 +243,28 @@ async function clearHistory() {
     showToast('История поиска очищена.', 'info');
   } catch (error) {
     showToast(error.message, 'error');
+  }
+}
+
+function renderSubscriptionInfo(sub) {
+  const badge = document.getElementById('profileSubBadge');
+  const cta = document.getElementById('premiumCta');
+
+  if (sub?.status === 'active') {
+    const planNames = { premium: 'Premium ⭐', business: 'Business 🚀' };
+    const planName = planNames[sub.plan] || sub.plan;
+    const expires = new Date(sub.expiresAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+    if (badge) {
+      badge.textContent = planName;
+      badge.style.background = sub.plan === 'business'
+        ? 'linear-gradient(135deg,#0f766e,#14b8a6)'
+        : 'linear-gradient(135deg,#7c3aed,#a855f7)';
+      badge.style.color = '#fff';
+      badge.style.border = 'none';
+    }
+    if (cta) cta.classList.add('hidden');
+  } else {
+    if (cta) cta.classList.remove('hidden');
   }
 }
 

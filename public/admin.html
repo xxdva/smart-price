@@ -61,6 +61,8 @@
         <button class="admin-tab is-active" data-tab="catalog">Каталог</button>
         <button class="admin-tab" data-tab="analytics">Аналитика</button>
         <button class="admin-tab" data-tab="monetization">💰 Монетизация</button>
+        <button class="admin-tab" data-tab="orders">📦 Заказы</button>
+        <button class="admin-tab" data-tab="users">👥 Пользователи</button>
       </div>
     </div>
 
@@ -302,6 +304,68 @@
             </div>
           </div>
 
+          <!-- Revenue chart -->
+          <div class="panel">
+            <div class="panel__head">
+              <div>
+                <span class="eyebrow">Динамика</span>
+                <h3>Доходы за 14 дней</h3>
+              </div>
+            </div>
+            <div class="analytics-charts" style="margin-top:16px">
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-card__title">Партнёрские комиссии, ₸</div>
+                <canvas id="revenueChart" height="180"></canvas>
+              </div>
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-card__title">GMV заказов, тыс. ₸</div>
+                <canvas id="gmvChart" height="180"></canvas>
+              </div>
+            </div>
+          </div>
+
+        </section>
+      </div>
+
+      <!-- ── TAB: Заказы ──────────────────────────────────────────── -->
+      <div id="tab-orders" class="admin-tab-content hidden">
+        <section class="orders-section reveal-up">
+          <div class="monetization-header">
+            <div>
+              <span class="eyebrow eyebrow-soft">Управление</span>
+              <h2>Все заказы</h2>
+              <p class="muted-text">Все заказы платформы, статусы, история оплат.</p>
+            </div>
+            <button id="refreshOrdersBtn" class="btn btn-ghost" style="padding:8px 16px;font-size:0.85rem">↻ Обновить</button>
+          </div>
+
+          <div id="ordersKpi" class="revenue-kpi" style="margin-bottom:24px"></div>
+
+          <div class="panel">
+            <div id="ordersTable" class="sponsored-table-wrap">
+              <div class="muted-text">Загрузка...</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ── TAB: Пользователи ────────────────────────────────────── -->
+      <div id="tab-users" class="admin-tab-content hidden">
+        <section class="users-section reveal-up">
+          <div class="monetization-header">
+            <div>
+              <span class="eyebrow eyebrow-soft">Аудитория</span>
+              <h2>Пользователи платформы</h2>
+              <p class="muted-text">Все зарегистрированные пользователи, подписки и активность.</p>
+            </div>
+            <button id="refreshUsersBtn" class="btn btn-ghost" style="padding:8px 16px;font-size:0.85rem">↻ Обновить</button>
+          </div>
+
+          <div id="usersKpi" class="revenue-kpi" style="margin-bottom:24px"></div>
+
+          <div id="usersGrid" class="users-grid">
+            <div class="muted-text">Загрузка...</div>
+          </div>
         </section>
       </div>
 
