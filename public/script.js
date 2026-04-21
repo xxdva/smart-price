@@ -16,6 +16,7 @@ const state = {
   searchSubmitted: false,
   selectedIds: loadStoredIds(SELECTION_STORAGE_KEY),
   favoriteIds: loadStoredIds(FAVORITES_STORAGE_KEY),
+  sponsoredSet: new Set(),
   visibleCount: 24,
   pageSize: 24,
   filters: {
@@ -73,11 +74,12 @@ async function init() {
   renderFavoriteBadges();
 
   try {
-    const [meResult, homeResult, productsResult, storesResult] = await Promise.allSettled([
+    const [meResult, homeResult, productsResult, storesResult, sponsoredResult] = await Promise.allSettled([
       fetchJson('/api/me'),
       fetchJson('/api/home'),
       fetchJson('/api/products'),
-      fetchJson('/api/stores')
+      fetchJson('/api/stores'),
+      fetchJson('/api/sponsored-products')
     ]);
 
     if (productsResult.status !== 'fulfilled') {
@@ -92,6 +94,10 @@ async function init() {
     state.home = homeResult.status === 'fulfilled'
       ? homeResult.value
       : buildHomeFallback(state.products, state.stores.length);
+
+    if (sponsoredResult.status === 'fulfilled' && Array.isArray(sponsoredResult.value)) {
+      state.sponsoredSet = new Set(sponsoredResult.value.map(s => s.productId));
+    }
 
     normalizeStoredLists();
     loadStoreRatings();
@@ -802,6 +808,8 @@ function renderProductCard(product, index = 0) {
   const name = escapeAttr(product.name || 'Product');
   const icon = escapeHtml(product.icon || '📦');
 
+  const isSponsored = state.sponsoredSet.has(product.id);
+
   return `
     <article class="product-card reveal-up" style="animation-delay:${Math.min(index * 40, 280)}ms">
       <div class="product-card__media-shell ${hasImage ? 'product-card__media-shell--photo' : ''}" data-category="${categoryKey}">
@@ -814,6 +822,7 @@ function renderProductCard(product, index = 0) {
           <div class="product-card__photo-tags">
             <span class="product-card__photo-cat">${escapeHtml(product.category || 'Каталог')}</span>
             ${product.badge ? `<span class="product-card__photo-badge">${escapeHtml(product.badge)}</span>` : ''}
+            ${isSponsored ? `<span class="sponsored-badge">Спонсор</span>` : ''}
           </div>
           ${renderFavoriteButton(product.id)}
         </div>
@@ -1043,6 +1052,19 @@ function handleModalClick(event) {
   const cartButton = event.target.closest('[data-modal-cart]');
   if (cartButton) {
     addToCart(Number(cartButton.dataset.productId), Number(cartButton.dataset.storeId));
+    return;
+  }
+
+  const affiliateLink = event.target.closest('[data-affiliate-product]');
+  if (affiliateLink) {
+    const productId = Number(affiliateLink.dataset.affiliateProduct);
+    const storeId = Number(affiliateLink.dataset.affiliateStore);
+    const price = Number(affiliateLink.dataset.affiliatePrice);
+    fetch('/api/affiliate/click', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, storeId, priceAtClick: price })
+    }).catch(() => {});
   }
 }
 
@@ -1142,7 +1164,7 @@ function openProduct(productId) {
                 >
                   В корзину
                 </button>
-                ${offer.storeUrl ? `<a class="btn btn-secondary" href="${escapeAttr(offer.storeUrl)}" target="_blank" rel="noopener noreferrer">К магазину</a>` : ''}
+                ${offer.storeUrl ? `<a class="btn btn-secondary" href="${escapeAttr(offer.storeUrl)}" target="_blank" rel="noopener noreferrer" data-affiliate-product="${product.id}" data-affiliate-store="${offer.storeId}" data-affiliate-price="${offer.price}">К магазину</a>` : ''}
               </div>
             </div>
           </article>

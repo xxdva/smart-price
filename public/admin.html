@@ -16,156 +16,297 @@
     <span class="glow glow-c"></span>
   </div>
 
-  <header class="site-header">
-    <div class="container site-header__inner">
-      <a href="/" class="brand">
-        <span class="brand__mark">S</span>
-        <span>
-          <strong>SmartPrice</strong>
-          <small>Панель управления</small>
-        </span>
-      </a>
-
-      <nav class="site-nav">
-        <a href="/">Главная</a>
-        <a href="/#catalog">Каталог</a>
-        <a href="/cabinet">Кабинет</a>
-      </nav>
+  <!-- Admin password gate -->
+  <div id="adminGate" class="admin-gate">
+    <div class="admin-gate__card">
+      <div class="admin-gate__icon">🔐</div>
+      <h2>Панель администратора</h2>
+      <p class="muted-text">Введите ключ доступа для входа</p>
+      <form id="adminGateForm" class="stack-form" style="margin-top:24px">
+        <label class="field">
+          <span class="field__label">Ключ доступа</span>
+          <input id="adminKeyInput" type="password" placeholder="••••••••••••" autocomplete="off" required>
+        </label>
+        <button class="btn btn-primary btn-block" type="submit">Войти в панель</button>
+        <div id="adminGateError" class="form-message form-message-error"></div>
+      </form>
     </div>
-  </header>
+  </div>
 
-  <main class="container dashboard">
-    <section class="profile-hero reveal-up">
-      <div class="profile-card">
-        <div class="profile-card__avatar">A</div>
-        <div>
-          <span class="eyebrow eyebrow-soft">Админка</span>
-          <h1>Управление каталогом</h1>
-          <p class="muted-text">Добавляйте товары, магазины и цены без правок в коде.</p>
-        </div>
+  <!-- Main admin panel (hidden until authenticated) -->
+  <div id="adminPanel" class="hidden">
+
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <a href="/" class="brand">
+          <span class="brand__mark">S</span>
+          <span>
+            <strong>SmartPrice</strong>
+            <small>Панель управления</small>
+          </span>
+        </a>
+
+        <nav class="site-nav">
+          <a href="/">Главная</a>
+          <a href="/#catalog">Каталог</a>
+          <a href="/cabinet">Кабинет</a>
+          <button id="adminLogoutBtn" class="btn btn-ghost" style="font-size:0.85rem;padding:6px 14px">Выйти</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Admin tabs -->
+    <div class="admin-tabs-bar">
+      <div class="container admin-tabs-inner">
+        <button class="admin-tab is-active" data-tab="catalog">Каталог</button>
+        <button class="admin-tab" data-tab="analytics">Аналитика</button>
+        <button class="admin-tab" data-tab="monetization">💰 Монетизация</button>
+      </div>
+    </div>
+
+    <main class="container dashboard">
+
+      <!-- ── TAB: Каталог ─────────────────────────────────────────── -->
+      <div id="tab-catalog" class="admin-tab-content">
+        <section class="profile-hero reveal-up">
+          <div class="profile-card">
+            <div class="profile-card__avatar">A</div>
+            <div>
+              <span class="eyebrow eyebrow-soft">Админка</span>
+              <h1>Управление каталогом</h1>
+              <p class="muted-text">Добавляйте товары, магазины и цены без правок в коде.</p>
+            </div>
+          </div>
+          <div id="adminStats" class="stats-grid stats-grid-dashboard"></div>
+        </section>
+
+        <section class="dashboard-grid">
+          <article class="panel reveal-up delay-1">
+            <div class="panel__head">
+              <div>
+                <span class="eyebrow">Товар</span>
+                <h2>Добавить позицию</h2>
+              </div>
+            </div>
+            <form id="productForm" class="stack-form">
+              <label class="field">
+                <span class="field__label">Название товара</span>
+                <input id="productName" type="text" placeholder="Например: iPhone 16 Pro Max" required>
+              </label>
+              <label class="field">
+                <span class="field__label">Иконка</span>
+                <input id="productIcon" type="text" maxlength="4" placeholder="📱">
+              </label>
+              <button class="btn btn-primary" type="submit">Добавить товар</button>
+              <div id="productMsg" class="form-message"></div>
+            </form>
+          </article>
+
+          <article class="panel reveal-up delay-2">
+            <div class="panel__head">
+              <div>
+                <span class="eyebrow">Магазин</span>
+                <h2>Добавить площадку</h2>
+              </div>
+            </div>
+            <form id="storeForm" class="stack-form">
+              <label class="field">
+                <span class="field__label">Название магазина</span>
+                <input id="storeName" type="text" placeholder="Например: Alser" required>
+              </label>
+              <label class="field">
+                <span class="field__label">Ссылка</span>
+                <input id="storeUrl" type="url" placeholder="https://example.kz">
+              </label>
+              <button class="btn btn-primary" type="submit">Добавить магазин</button>
+              <div id="storeMsg" class="form-message"></div>
+            </form>
+          </article>
+
+          <article class="panel panel-wide reveal-up delay-3">
+            <div class="panel__head">
+              <div>
+                <span class="eyebrow">Цена</span>
+                <h2>Создать или обновить оффер</h2>
+              </div>
+            </div>
+            <form id="priceForm" class="stack-form">
+              <div class="field-row field-row-3">
+                <label class="field">
+                  <span class="field__label">Товар</span>
+                  <select id="priceProduct" required>
+                    <option value="">Выберите товар</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span class="field__label">Магазин</span>
+                  <select id="priceStore" required>
+                    <option value="">Выберите магазин</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span class="field__label">Цена, ₸</span>
+                  <input id="priceValue" type="number" min="1" placeholder="320000" required>
+                </label>
+              </div>
+              <button class="btn btn-primary" type="submit">Сохранить цену</button>
+              <div id="priceMsg" class="form-message"></div>
+            </form>
+          </article>
+        </section>
       </div>
 
-      <div id="adminStats" class="stats-grid stats-grid-dashboard"></div>
-    </section>
-
-    <section class="dashboard-grid">
-      <article class="panel reveal-up delay-1">
-        <div class="panel__head">
-          <div>
-            <span class="eyebrow">Товар</span>
-            <h2>Добавить позицию</h2>
-          </div>
-        </div>
-
-        <form id="productForm" class="stack-form">
-          <label class="field">
-            <span class="field__label">Название товара</span>
-            <input id="productName" type="text" placeholder="Например: iPhone 16 Pro Max" required>
-          </label>
-          <label class="field">
-            <span class="field__label">Иконка</span>
-            <input id="productIcon" type="text" maxlength="4" placeholder="📱">
-          </label>
-          <button class="btn btn-primary" type="submit">Добавить товар</button>
-          <div id="productMsg" class="form-message"></div>
-        </form>
-      </article>
-
-      <article class="panel reveal-up delay-2">
-        <div class="panel__head">
-          <div>
-            <span class="eyebrow">Магазин</span>
-            <h2>Добавить площадку</h2>
-          </div>
-        </div>
-
-        <form id="storeForm" class="stack-form">
-          <label class="field">
-            <span class="field__label">Название магазина</span>
-            <input id="storeName" type="text" placeholder="Например: Alser" required>
-          </label>
-          <label class="field">
-            <span class="field__label">Ссылка</span>
-            <input id="storeUrl" type="url" placeholder="https://example.kz">
-          </label>
-          <button class="btn btn-primary" type="submit">Добавить магазин</button>
-          <div id="storeMsg" class="form-message"></div>
-        </form>
-      </article>
-
-      <article class="panel panel-wide reveal-up delay-3">
-        <div class="panel__head">
-          <div>
-            <span class="eyebrow">Цена</span>
-            <h2>Создать или обновить оффер</h2>
-          </div>
-        </div>
-
-        <form id="priceForm" class="stack-form">
-          <div class="field-row field-row-3">
-            <label class="field">
-              <span class="field__label">Товар</span>
-              <select id="priceProduct" required>
-                <option value="">Выберите товар</option>
-              </select>
-            </label>
-            <label class="field">
-              <span class="field__label">Магазин</span>
-              <select id="priceStore" required>
-                <option value="">Выберите магазин</option>
-              </select>
-            </label>
-            <label class="field">
-              <span class="field__label">Цена, ₸</span>
-              <input id="priceValue" type="number" min="1" placeholder="320000" required>
-            </label>
+      <!-- ── TAB: Аналитика ───────────────────────────────────────── -->
+      <div id="tab-analytics" class="admin-tab-content hidden">
+        <section class="analytics-section reveal-up">
+          <div class="analytics-section__head">
+            <h2>📊 Аналитика</h2>
+            <button id="refreshAnalyticsBtn" class="btn btn-ghost" style="padding:8px 16px;font-size:0.85rem">↻ Обновить</button>
           </div>
 
-          <button class="btn btn-primary" type="submit">Сохранить цену</button>
-          <div id="priceMsg" class="form-message"></div>
-        </form>
-      </article>
-    </section>
+          <div id="analyticsKpi" class="analytics-kpi"></div>
 
-    <!-- ── Аналитика ─────────────────────────────────────────── -->
-    <section class="analytics-section reveal-up">
-      <div class="analytics-section__head">
-        <h2>📊 Аналитика</h2>
-        <button id="refreshAnalyticsBtn" class="btn btn-ghost" style="padding:8px 16px;font-size:0.85rem">↻ Обновить</button>
+          <div class="analytics-charts">
+            <div class="analytics-chart-card">
+              <div class="analytics-chart-card__title">Поиски за 7 дней</div>
+              <canvas id="searchChart" height="180"></canvas>
+            </div>
+            <div class="analytics-chart-card">
+              <div class="analytics-chart-card__title">Регистрации за 7 дней</div>
+              <canvas id="regChart" height="180"></canvas>
+            </div>
+          </div>
+
+          <div class="analytics-tables">
+            <div class="analytics-table-card">
+              <div class="analytics-table-card__title">🔍 Топ поисков</div>
+              <div id="topSearchesTable"></div>
+            </div>
+            <div class="analytics-table-card">
+              <div class="analytics-table-card__title">🛒 Топ товаров в корзине</div>
+              <div id="topProductsTable"></div>
+            </div>
+            <div class="analytics-table-card">
+              <div class="analytics-table-card__title">⭐ Рейтинг магазинов</div>
+              <div id="storeRatingsTable"></div>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <!-- Ключевые метрики -->
-      <div id="analyticsKpi" class="analytics-kpi"></div>
+      <!-- ── TAB: Монетизация ─────────────────────────────────────── -->
+      <div id="tab-monetization" class="admin-tab-content hidden">
+        <section class="monetization-section reveal-up">
 
-      <!-- Графики -->
-      <div class="analytics-charts">
-        <div class="analytics-chart-card">
-          <div class="analytics-chart-card__title">Поиски за 7 дней</div>
-          <canvas id="searchChart" height="180"></canvas>
-        </div>
-        <div class="analytics-chart-card">
-          <div class="analytics-chart-card__title">Регистрации за 7 дней</div>
-          <canvas id="regChart" height="180"></canvas>
-        </div>
+          <div class="monetization-header">
+            <div>
+              <span class="eyebrow eyebrow-soft">Доходы</span>
+              <h2>Монетизация платформы</h2>
+              <p class="muted-text">Спонсорские размещения, партнёрские комиссии и подписки.</p>
+            </div>
+            <button id="refreshMonetizationBtn" class="btn btn-ghost" style="padding:8px 16px;font-size:0.85rem">↻ Обновить</button>
+          </div>
+
+          <!-- Revenue KPI cards -->
+          <div id="revenueKpi" class="revenue-kpi">
+            <div class="revenue-kpi__skeleton">Загрузка...</div>
+          </div>
+
+          <!-- Revenue breakdown bar -->
+          <div id="revenueBreakdown" class="revenue-breakdown"></div>
+
+          <!-- Two column: sponsored form + subscriptions -->
+          <div class="monetization-grid">
+
+            <!-- Sponsored listings management -->
+            <div class="panel monetization-panel">
+              <div class="panel__head">
+                <div>
+                  <span class="eyebrow">Реклама</span>
+                  <h3>Спонсорское размещение</h3>
+                </div>
+              </div>
+              <form id="sponsoredForm" class="stack-form">
+                <div class="field-row">
+                  <label class="field">
+                    <span class="field__label">Товар</span>
+                    <select id="sponsoredProduct" required>
+                      <option value="">Выберите товар</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span class="field__label">Магазин</span>
+                    <select id="sponsoredStore" required>
+                      <option value="">Выберите магазин</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="field-row">
+                  <label class="field">
+                    <span class="field__label">Ежемесячная плата, ₸</span>
+                    <input id="sponsoredFee" type="number" min="1000" value="15000" required>
+                  </label>
+                  <label class="field">
+                    <span class="field__label">Срок (мес.)</span>
+                    <select id="sponsoredMonths">
+                      <option value="1">1 месяц</option>
+                      <option value="2">2 месяца</option>
+                      <option value="3">3 месяца</option>
+                      <option value="6">6 месяцев</option>
+                    </select>
+                  </label>
+                </div>
+                <button class="btn btn-primary" type="submit">Создать размещение</button>
+                <div id="sponsoredMsg" class="form-message"></div>
+              </form>
+            </div>
+
+            <!-- Subscriptions panel -->
+            <div class="panel monetization-panel">
+              <div class="panel__head">
+                <div>
+                  <span class="eyebrow">Подписки</span>
+                  <h3>Активные подписчики</h3>
+                </div>
+              </div>
+              <div id="subscriptionsList" class="subscriptions-list">
+                <div class="muted-text">Загрузка...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active sponsored listings table -->
+          <div class="panel">
+            <div class="panel__head">
+              <div>
+                <span class="eyebrow">Активные кампании</span>
+                <h3>Спонсорские размещения</h3>
+              </div>
+            </div>
+            <div id="sponsoredTable" class="sponsored-table-wrap">
+              <div class="muted-text">Загрузка...</div>
+            </div>
+          </div>
+
+          <!-- Affiliate clicks feed -->
+          <div class="panel">
+            <div class="panel__head">
+              <div>
+                <span class="eyebrow">Партнёрская программа</span>
+                <h3>Последние переходы в магазины</h3>
+              </div>
+              <span class="eyebrow" style="font-size:0.75rem">3% от каждой покупки</span>
+            </div>
+            <div id="affiliateClicksFeed" class="affiliate-feed">
+              <div class="muted-text">Загрузка...</div>
+            </div>
+          </div>
+
+        </section>
       </div>
 
-      <!-- Таблицы -->
-      <div class="analytics-tables">
-        <div class="analytics-table-card">
-          <div class="analytics-table-card__title">🔍 Топ поисков</div>
-          <div id="topSearchesTable"></div>
-        </div>
-        <div class="analytics-table-card">
-          <div class="analytics-table-card__title">🛒 Топ товаров в корзине</div>
-          <div id="topProductsTable"></div>
-        </div>
-        <div class="analytics-table-card">
-          <div class="analytics-table-card__title">⭐ Рейтинг магазинов</div>
-          <div id="storeRatingsTable"></div>
-        </div>
-      </div>
-    </section>
-  </main>
+    </main>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/admin.js"></script>

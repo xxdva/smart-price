@@ -6,6 +6,7 @@ const session = require('express-session');
 const path = require('path');
 
 const DB_URL = process.env.DATABASE_URL || 'postgresql://postgres@localhost:5432/smartprice';
+const ADMIN_KEY = process.env.ADMIN_KEY || 'smartprice2025';
 const adapter = new PrismaPg({ connectionString: DB_URL });
 const prisma = new PrismaClient({ adapter });
 
@@ -799,6 +800,12 @@ app.get('/delivery', requirePageAuth, (req, res) => sendPage(res, 'delivery.html
 app.get('/payment', requirePageAuth, (req, res) => sendPage(res, 'payment.html'));
 app.get('/tracking/:orderId', requirePageAuth, (req, res) => sendPage(res, 'tracking.html'));
 app.get('/admin', (req, res) => sendPage(res, 'admin.html'));
+
+function requireAdmin(req, res, next) {
+  const key = req.headers['x-admin-key'];
+  if (key !== ADMIN_KEY) return res.status(403).json({ error: 'Доступ запрещён' });
+  next();
+}
 
 app.post('/api/register', async (req, res) => {
   const name = normalizeText(req.body.name);
@@ -1611,11 +1618,222 @@ app.patch('/api/orders/:id/status', async (req, res) => {
   res.json(updated);
 });
 
+// ── Monetization ──────────────────────────────────────────────────────────────
+
+app.get('/api/admin/monetization', requireAdmin, async (req, res) => {
+  const now = new Date();
+  const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+  const [activeListings, allListings, recentClicks, activeSubscriptions, totalClicks, totalCommission] = await Promise.all([
+    prisma.sponsoredListing.findMany({
+      where: { isActive: true, expiresAt: { gte: now } },
+      include: { store: true, product: { select: { id: true, name: true, icon: true } } },
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.sponsoredListing.findMany({
+      include: { store: true, product: { select: { id: true, name: true, icon: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 20
+    }),
+    prisma.affiliateClick.findMany({
+      include: {
+        store: { select: { id: true, name: true } },
+        product: { select: { id: true, name: true, icon: true } },
+        user: { select: { name: true } }
+      },
+      orderBy: { clickedAt: 'desc' },
+      take: 30
+    }),
+    prisma.subscription.findMany({
+      where: { status: 'active' },
+      include: { user: { select: { name: true, email: true } } },
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.affiliateClick.count(),
+    prisma.affiliateClick.aggregate({ _sum: { commission: true } })
+  ]);
+
+  const sponsorRevenue = activeListings.reduce((s, l) => s + l.monthlyFee, 0);
+  const affiliateRevenue = totalCommission._sum.commission || 0;
+  const subscriptionRevenue = activeSubscriptions.reduce((s, sub) => s + sub.amount, 0);
+
+  const monthClicks = recentClicks.filter(c => new Date(c.clickedAt) >= monthAgo);
+  const monthCommission = monthClicks.reduce((s, c) => s + c.commission, 0);
+
+  res.json({
+    revenue: {
+      sponsor: sponsorRevenue,
+      affiliate: affiliateRevenue,
+      subscriptions: subscriptionRevenue,
+      total: sponsorRevenue + affiliateRevenue + subscriptionRevenue,
+      monthAffiliate: monthCommission
+    },
+    listings: allListings,
+    recentClicks,
+    subscriptions: activeSubscriptions,
+    stats: {
+      totalClicks,
+      activeListings: activeListings.length,
+      activeSubscriptions: activeSubscriptions.length
+    }
+  });
+});
+
+app.post('/api/admin/sponsored', requireAdmin, async (req, res) => {
+  const { productId, storeId, monthlyFee, months } = req.body;
+  if (!productId || !storeId) return res.status(400).json({ error: 'Укажите товар и магазин' });
+  const expiresAt = new Date();
+  expiresAt.setMonth(expiresAt.getMonth() + (Number(months) || 1));
+
+  const listing = await prisma.sponsoredListing.create({
+    data: {
+      productId: Number(productId),
+      storeId: Number(storeId),
+      monthlyFee: Number(monthlyFee) || 15000,
+      expiresAt,
+      isActive: true
+    },
+    include: { store: true, product: { select: { id: true, name: true, icon: true } } }
+  });
+  res.json(listing);
+});
+
+app.delete('/api/admin/sponsored/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.sponsoredListing.update({ where: { id }, data: { isActive: false } });
+  res.json({ ok: true });
+});
+
+app.get('/api/sponsored-products', async (req, res) => {
+  const now = new Date();
+  const listings = await prisma.sponsoredListing.findMany({
+    where: { isActive: true, expiresAt: { gte: now } },
+    select: { productId: true, storeId: true }
+  });
+  res.json(listings);
+});
+
+app.post('/api/affiliate/click', async (req, res) => {
+  const { productId, storeId, priceAtClick } = req.body;
+  if (!productId || !storeId) return res.status(400).json({ error: 'Неверные данные' });
+  const price = Number(priceAtClick) || 0;
+  const commission = Math.round(price * 0.03);
+
+  await prisma.affiliateClick.create({
+    data: {
+      userId: req.session.userId || null,
+      productId: Number(productId),
+      storeId: Number(storeId),
+      priceAtClick: price,
+      commission
+    }
+  });
+
+  await prisma.sponsoredListing.updateMany({
+    where: { productId: Number(productId), storeId: Number(storeId), isActive: true },
+    data: { totalClicks: { increment: 1 } }
+  });
+
+  res.json({ ok: true });
+});
+
 const PORT = Number(process.env.PORT) || 3000;
+
+async function ensureMonetizationSeedData() {
+  const count = await prisma.sponsoredListing.count();
+  if (count > 0) return;
+
+  const [stores, products, users] = await Promise.all([
+    prisma.store.findMany({ take: 5 }),
+    prisma.product.findMany({ take: 6 }),
+    prisma.user.findMany({ take: 3 })
+  ]);
+
+  if (!stores.length || !products.length) return;
+
+  const now = new Date();
+  const in30 = new Date(now.getTime() + 30 * 86400000);
+  const in60 = new Date(now.getTime() + 60 * 86400000);
+
+  const listingData = [
+    { storeIdx: 0, productIdx: 0, monthlyFee: 35000, totalClicks: 284, months: 2 },
+    { storeIdx: 1, productIdx: 1, monthlyFee: 25000, totalClicks: 173, months: 1 },
+    { storeIdx: 2, productIdx: 2, monthlyFee: 20000, totalClicks: 142, months: 1 },
+    { storeIdx: 0, productIdx: 3, monthlyFee: 18000, totalClicks: 98, months: 1 },
+    { storeIdx: 3, productIdx: 4, monthlyFee: 15000, totalClicks: 67, months: 2 }
+  ];
+
+  for (const d of listingData) {
+    if (d.productIdx >= products.length || d.storeIdx >= stores.length) continue;
+    const expiresAt = d.months === 2 ? in60 : in30;
+    await prisma.sponsoredListing.create({
+      data: {
+        storeId: stores[d.storeIdx].id,
+        productId: products[d.productIdx].id,
+        monthlyFee: d.monthlyFee,
+        totalClicks: d.totalClicks,
+        isActive: true,
+        expiresAt
+      }
+    });
+  }
+
+  const clickData = [
+    { daysAgo: 0, hoursAgo: 2, pIdx: 0, sIdx: 0, price: 576000 },
+    { daysAgo: 0, hoursAgo: 4, pIdx: 2, sIdx: 1, price: 279000 },
+    { daysAgo: 0, hoursAgo: 6, pIdx: 1, sIdx: 2, price: 451000 },
+    { daysAgo: 1, hoursAgo: 1, pIdx: 3, sIdx: 0, price: 128000 },
+    { daysAgo: 1, hoursAgo: 5, pIdx: 0, sIdx: 1, price: 559000 },
+    { daysAgo: 1, hoursAgo: 9, pIdx: 4, sIdx: 2, price: 389000 },
+    { daysAgo: 2, hoursAgo: 2, pIdx: 2, sIdx: 0, price: 288000 },
+    { daysAgo: 2, hoursAgo: 7, pIdx: 1, sIdx: 1, price: 463000 },
+    { daysAgo: 3, hoursAgo: 3, pIdx: 5, sIdx: 2, price: 132000 },
+    { daysAgo: 3, hoursAgo: 8, pIdx: 0, sIdx: 0, price: 584000 },
+    { daysAgo: 4, hoursAgo: 1, pIdx: 3, sIdx: 1, price: 126000 },
+    { daysAgo: 5, hoursAgo: 4, pIdx: 2, sIdx: 2, price: 221000 },
+    { daysAgo: 6, hoursAgo: 2, pIdx: 1, sIdx: 0, price: 579000 },
+    { daysAgo: 7, hoursAgo: 6, pIdx: 4, sIdx: 1, price: 398000 }
+  ];
+
+  for (const c of clickData) {
+    const pIdx = Math.min(c.pIdx, products.length - 1);
+    const sIdx = Math.min(c.sIdx, stores.length - 1);
+    const clickedAt = new Date(now.getTime() - c.daysAgo * 86400000 - c.hoursAgo * 3600000);
+    await prisma.affiliateClick.create({
+      data: {
+        userId: users.length ? users[Math.floor(Math.random() * users.length)].id : null,
+        storeId: stores[sIdx].id,
+        productId: products[pIdx].id,
+        priceAtClick: c.price,
+        commission: Math.round(c.price * 0.03),
+        clickedAt
+      }
+    });
+  }
+
+  if (users.length) {
+    for (let i = 0; i < Math.min(2, users.length); i++) {
+      await prisma.subscription.upsert({
+        where: { userId: users[i].id },
+        create: {
+          userId: users[i].id,
+          plan: i === 0 ? 'premium' : 'business',
+          amount: i === 0 ? 990 : 2490,
+          status: 'active',
+          expiresAt: in30
+        },
+        update: {}
+      });
+    }
+  }
+
+  console.log('Монетизация: демо-данные добавлены.');
+}
 
 async function main() {
   await ensureSeedData();
   await repairLegacyData();
+  await ensureMonetizationSeedData();
 
   app.listen(PORT, () => {
     console.log(`SmartPrice: http://localhost:${PORT}`);
